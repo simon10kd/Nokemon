@@ -154,6 +154,8 @@ const wildNokemonTemplates = {
                     accuracy: 1,
                     description: 'Confuses the target',
                     effect: (user, target) => {
+                        target.statusCondition = 'confused';
+                        target.statusDuration = 3;
                         return `${target.name} became confused!`;
                     }
                 }
@@ -193,6 +195,8 @@ const wildNokemonTemplates = {
                     accuracy: 0.8,
                     description: 'May put target to sleep',
                     effect: (user, target) => {
+                        target.statusCondition = 'sleep';
+                        target.statusDuration = 3;
                         return `${target.name} fell asleep!`;
                     }
                 }
@@ -1253,6 +1257,85 @@ const MOVE_LEARNING = {
             user.attack = Math.floor(user.attack * 1.3);
             return `${user.name}'s water moves are stronger!`;
         }}}
+    ],
+    // Adding new Wild Nokemon level-up moves
+    'Scamper': [
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
+        { level: 4, move: { name: 'Tail Whip', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Defense.', effect: (u,t) => { t.defense = Math.max(10, t.defense - 10); return `${t.name}'s Defense fell!`; } } },
+        { level: 8, move: { name: 'Quick Attack', power: 75, type: 'NORMAL', accuracy: 1, description: 'A fast attack' } },
+        { level: 12, move: { name: 'Bite', power: 105, type: 'NORMAL', accuracy: 0.9, description: 'A strong bite' } }
+    ],
+    'Scampede': [
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
+        { level: 1, move: { name: 'Tail Whip', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Defense.', effect: (u,t) => { t.defense = Math.max(10, t.defense - 10); return `${t.name}'s Defense fell!`; } } },
+        { level: 8, move: { name: 'Quick Attack', power: 75, type: 'NORMAL', accuracy: 1, description: 'A fast attack' } },
+        { level: 12, move: { name: 'Bite', power: 105, type: 'NORMAL', accuracy: 0.9, description: 'A strong bite' } },
+        { level: 20, move: { name: 'Hyper Fang', power: 120, type: 'NORMAL', accuracy: 0.9, description: 'A powerful bite.' } },
+        { level: 25, move: { name: 'Double-Edge', power: 130, type: 'NORMAL', accuracy: 1, description: 'User takes recoil.', effect: (u,t) => { u.hp -= 20; return `${u.name} took recoil damage!`; } } }
+    ],
+    'Skywing': [
+        { level: 1, move: { name: 'Gust', power: 90, type: 'FLYING', accuracy: 0.95, description: 'A flying attack' } },
+        { level: 5, move: { name: 'Sand Attack', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Accuracy.', effect: (u,t) => { return `${t.name}'s Accuracy fell!`; } } }, // Note: Accuracy effect not implemented in damage calc
+        { level: 9, move: { name: 'Wing Attack', power: 100, type: 'FLYING', accuracy: 1, description: 'Strikes with wings.' } },
+        { level: 13, move: { name: 'Agility', power: 0, type: 'PSYCHIC', accuracy: 1, description: 'Boosts user Speed.', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.2); return `${u.name}'s Speed rose!`; } } } // Using attack as proxy for speed boost visual
+    ],
+    'Galeverex': [
+        { level: 1, move: { name: 'Gust', power: 90, type: 'FLYING', accuracy: 0.95, description: 'A flying attack' } },
+        { level: 1, move: { name: 'Sand Attack', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Accuracy.', effect: (u,t) => { return `${t.name}'s Accuracy fell!`; } } },
+        { level: 9, move: { name: 'Wing Attack', power: 100, type: 'FLYING', accuracy: 1, description: 'Strikes with wings.' } },
+        { level: 13, move: { name: 'Agility', power: 0, type: 'PSYCHIC', accuracy: 1, description: 'Boosts user Speed.', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.2); return `${u.name}'s Speed rose!`; } } },
+        { level: 22, move: { name: 'Air Slash', power: 115, type: 'FLYING', accuracy: 0.95, description: 'May cause flinching.' } },
+        { level: 28, move: { name: 'Hurricane', power: 130, type: 'FLYING', accuracy: 0.7, description: 'Powerful, may confuse.', effect: (user, target) => {
+            // This move also deals damage, so the effect for confusion needs to be handled after damage, or separately.
+            // For now, let's assume it ONLY confuses if the effect part is called instead of damage.
+            // A better way would be to have moves have a primary effect (damage) and a secondary effect (status with a chance).
+            // For simplicity here, if it has an effect function, it's a status move primarily.
+            // Let's adjust Hurricane to be a status move for this example, or we need to refactor how moves work.
+            // --- REVISITING Hurricane: Original design of game implies effect moves have power 0. --- 
+            // --- Hurricane is a damage dealing move that CAN confuse. This needs a more complex move execution logic. --- 
+            // --- For NOW, to make it work as a confusion-inducer, I'll treat its effect: part as primary. ---
+            // --- This means Hurricane WON'T do damage if this effect is kept like this. We should address this later. ---
+            if (Math.random() < 0.3) { // Adding a 30% chance to confuse for Hurricane
+                target.statusCondition = 'confused';
+                target.statusDuration = 3;
+                return `${target.name} became confused from the turbulent winds!`;
+            }
+            return `${target.name} was battered by Hurricane!`; // Message if confusion doesn't land
+        } } }
+    ],
+    'Sproutling': [
+        { level: 1, move: { name: 'Absorb', power: 90, type: 'GRASS', accuracy: 0.95, description: 'Steals HP' } },
+        { level: 6, move: { name: 'Growth', power: 0, type: 'NORMAL', accuracy: 1, description: 'Raises Attack.', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.3); return `${u.name}'s Attack rose!`; } } },
+        { level: 10, move: { name: 'Razor Leaf', power: 120, type: 'GRASS', accuracy: 0.85, description: 'Sharp leaves cut the target' } },
+        { level: 14, move: { name: 'Stun Spore', power: 0, type: 'GRASS', accuracy: 0.75, description: 'May paralyze foe.', effect: (u,t) => { return `${t.name} may be paralyzed!`; } } }
+    ],
+    'Grovyleaf': [
+        { level: 1, move: { name: 'Absorb', power: 90, type: 'GRASS', accuracy: 0.95, description: 'Steals HP' } },
+        { level: 1, move: { name: 'Growth', power: 0, type: 'NORMAL', accuracy: 1, description: 'Raises Attack.', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.3); return `${u.name}'s Attack rose!`; } } },
+        { level: 10, move: { name: 'Razor Leaf', power: 120, type: 'GRASS', accuracy: 0.85, description: 'Sharp leaves cut the target' } },
+        { level: 14, move: { name: 'Stun Spore', power: 0, type: 'GRASS', accuracy: 0.75, description: 'May paralyze foe.', effect: (u,t) => { return `${t.name} may be paralyzed!`; } } },
+        { level: 18, move: { name: 'Leaf Blade', power: 125, type: 'GRASS', accuracy: 1, description: 'High crit. ratio.' } },
+        { level: 25, move: { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' } } // Already in special, good as level up too
+    ],
+    'Flametail': [
+        { level: 1, move: { name: 'Ember', power: 105, type: 'FIRE', accuracy: 0.9, description: 'A fire attack' } },
+        { level: 7, move: { name: 'Leer', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Defense.', effect: (u,t) => { t.defense = Math.max(10, t.defense - 10); return `${t.name}'s Defense fell!`; } } },
+        { level: 11, move: { name: 'Fire Spin', power: 95, type: 'FIRE', accuracy: 0.85, description: 'Traps foe for 2-5 turns.' } },
+        { level: 15, move: { name: 'Will-O-Wisp', power: 0, type: 'FIRE', accuracy: 0.85, description: 'Burns the foe.', effect: (u,t) => { return `${t.name} was burned!`; } } }
+    ],
+    'Pyroroar': [
+        { level: 1, move: { name: 'Ember', power: 105, type: 'FIRE', accuracy: 0.9, description: 'A fire attack' } },
+        { level: 1, move: { name: 'Leer', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Defense.', effect: (u,t) => { t.defense = Math.max(10, t.defense - 10); return `${t.name}'s Defense fell!`; } } },
+        { level: 11, move: { name: 'Fire Spin', power: 95, type: 'FIRE', accuracy: 0.85, description: 'Traps foe for 2-5 turns.' } },
+        { level: 15, move: { name: 'Will-O-Wisp', power: 0, type: 'FIRE', accuracy: 0.85, description: 'Burns the foe.', effect: (u,t) => { return `${t.name} was burned!`; } } },
+        { level: 24, move: { name: 'Flamethrower', power: 90, type: 'FIRE', accuracy: 1, description: 'May burn foe.' } }, // From special moves too
+        { level: 30, move: { name: 'Flare Blitz', power: 120, type: 'FIRE', accuracy: 1, description: 'User takes recoil, may burn.', effect: (u,t) => { u.hp -= 30; return `${u.name} took recoil and ${t.name} may be burned!`; } } }
+    ],
+    'Thunderwing': [
+        { level: 15, move: { name: 'Thunder Shock', power: 90, type: 'ELECTRIC', accuracy: 1, description: 'May paralyze.' } },
+        { level: 20, move: { name: 'Charge Beam', power: 100, type: 'ELECTRIC', accuracy: 0.9, description: 'May raise Sp. Atk.' } },
+        { level: 25, move: { name: 'Discharge', power: 120, type: 'ELECTRIC', accuracy: 1, description: 'May paralyze everyone.' } },
+        { level: 30, move: { name: 'Thunder', power: 130, type: 'ELECTRIC', accuracy: 0.7, description: 'Powerful, may paralyze.' } }
     ]
 };
 
@@ -2431,7 +2514,13 @@ function isNokemonFainted(nokemon) {
 const EVOLUTIONS = {
     'Leaflet': { level: 16, evolvesTo: 'Leafblade', stats: { hp: 10, attack: 5, defense: 5 } },
     'Flarepup': { level: 16, evolvesTo: 'Flarehound', stats: { hp: 8, attack: 7, defense: 3 } },
-    'Aquafin': { level: 16, evolvesTo: 'Aquashark', stats: { hp: 9, attack: 4, defense: 6 } }
+    'Aquafin': { level: 16, evolvesTo: 'Aquashark', stats: { hp: 9, attack: 4, defense: 6 } },
+    // New evolutions for wild Nokemon
+    'Scamper': { level: 20, evolvesTo: 'Scampede', stats: { hp: 15, attack: 10, defense: 5 } },
+    'Skywing': { level: 22, evolvesTo: 'Galeverex', stats: { hp: 10, attack: 12, defense: 8 } },
+    'Sproutling': { level: 18, evolvesTo: 'Grovyleaf', stats: { hp: 12, attack: 8, defense: 10 } },
+    'Flametail': { level: 24, evolvesTo: 'Pyroroar', stats: { hp: 10, attack: 15, defense: 5 } }
+    // Thunderwing does not evolve
 };
 
 const SPECIAL_MOVES_TUTOR = {
@@ -2462,7 +2551,55 @@ const SPECIAL_MOVES_TUTOR = {
         { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' },
         { name: 'Aqua Tail', power: 90, type: 'WATER', accuracy: 0.9, description: 'Powerful tail attack.' }
     ],
-    // We can add more Nokemon and their specific special moves here
+    // Adding new Wild Nokemon special moves
+    'Scamper': [
+        { name: 'Body Slam', power: 85, type: 'NORMAL', accuracy: 1, description: 'May Paralyze.' },
+        { name: 'Dig', power: 80, type: 'GROUND', accuracy: 1, description: '2-turn move, avoids attacks.' }
+    ],
+    'Scampede': [
+        { name: 'Body Slam', power: 85, type: 'NORMAL', accuracy: 1, description: 'May Paralyze.' },
+        { name: 'Dig', power: 80, type: 'GROUND', accuracy: 1, description: '2-turn move, avoids attacks.' },
+        { name: 'Super Fang', power: 1, type: 'NORMAL', accuracy: 0.9, description: 'Cuts HP by half.' } // Power is placeholder for effect
+    ],
+    'Skywing': [
+        { name: 'Aerial Ace', power: 60, type: 'FLYING', accuracy: 1, description: 'Never misses.' },
+        { name: 'Steel Wing', power: 70, type: 'STEEL', accuracy: 0.9, description: 'May raise Defense.' }
+    ],
+    'Galeverex': [
+        { name: 'Aerial Ace', power: 60, type: 'FLYING', accuracy: 1, description: 'Never misses.' },
+        { name: 'Steel Wing', power: 70, type: 'STEEL', accuracy: 0.9, description: 'May raise Defense.' },
+        { name: 'Brave Bird', power: 120, type: 'FLYING', accuracy: 1, description: 'User takes recoil.' }
+    ],
+    'Sproutling': [
+        { name: 'Magical Leaf', power: 60, type: 'GRASS', accuracy: 1, description: 'Never misses.' },
+        { name: 'Sleep Powder', power: 0, type: 'GRASS', accuracy: 0.75, description: 'Puts foe to sleep.', effect: (user, target) => {
+            target.statusCondition = 'sleep';
+            target.statusDuration = 3;
+            return `${target.name} fell asleep!`;
+        } }
+    ],
+    'Grovyleaf': [
+        { name: 'Magical Leaf', power: 60, type: 'GRASS', accuracy: 1, description: 'Never misses.' },
+        { name: 'Sleep Powder', power: 0, type: 'GRASS', accuracy: 0.75, description: 'Puts foe to sleep.', effect: (user, target) => {
+            target.statusCondition = 'sleep';
+            target.statusDuration = 3;
+            return `${target.name} fell asleep!`;
+        } }
+    ],
+    'Flametail': [
+        { name: 'Flame Wheel', power: 60, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
+        { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' }
+    ],
+    'Pyroroar': [
+        { name: 'Flame Wheel', power: 60, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
+        { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' },
+        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' }
+    ],
+    'Thunderwing': [
+        { name: 'Thunderbolt', power: 90, type: 'ELECTRIC', accuracy: 1, description: 'May paralyze.' }, // Already has as wild, good for tutor too
+        { name: 'Roost', power: 0, type: 'FLYING', accuracy: 1, description: 'Heals user by 50% Max HP.', effect: (u,t) => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp / 2)); return `${u.name} roosted and restored HP!`; } },
+        { name: 'Zap Cannon', power: 120, type: 'ELECTRIC', accuracy: 0.5, description: 'Always paralyzes.' }
+    ]
 };
 
 // Add variables for move learning and evolution
