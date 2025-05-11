@@ -217,7 +217,8 @@ const GAME_STATE = {
     NOKEMON_SELECTION: 'nokemon_selection',
     PARTY_VIEW: 'party_view',
     MOVE_LEARNING: 'move_learning',  // New state
-    EVOLUTION: 'evolution'  // New state
+    EVOLUTION: 'evolution',  // New state
+    MOVE_TUTOR: 'move_tutor' // New state for Move Tutor
 };
 
 // Add tutorial variables
@@ -484,7 +485,12 @@ const healingCenter = {
     y: 200,
     width: 100,
     height: 80,
-    color: '#FF69B4'
+    color: '#FF69B4', // Original color, will be replaced by graphics
+    signColor: '#FFFFFF',
+    roofColor: '#D2691E', // Brown roof
+    wallColor: '#F5F5DC', // Beige wall
+    doorColor: '#A0522D', // Sienna door
+    windowColor: '#ADD8E6' // Light blue window
 };
 
 // Add new area grass patches
@@ -571,6 +577,7 @@ const audioSystem = {
     
     // Musical notes (frequencies in Hz)
     notes: {
+        'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
         'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
         'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
         'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51
@@ -881,6 +888,84 @@ window.addEventListener('keydown', (e) => {
             evolutionMessage = '';
             audioSystem.playSound('menu');
         }
+    } else if (currentState === GAME_STATE.MOVE_TUTOR) {
+        const allPlayerNokemon = [startingNokemon, ...playerNokemon].filter(n => n);
+        if (moveTutorPhase === 'nokemon_selection') {
+            if (e.key === 'ArrowUp') {
+                selectedNokemonIndex = (selectedNokemonIndex - 1 + allPlayerNokemon.length) % allPlayerNokemon.length;
+                audioSystem.playSound('menu');
+            } else if (e.key === 'ArrowDown') {
+                selectedNokemonIndex = (selectedNokemonIndex + 1) % allPlayerNokemon.length;
+                audioSystem.playSound('menu');
+            } else if (e.key === 'Enter') {
+                if (allPlayerNokemon.length > 0) {
+                    nokemonToTeach = allPlayerNokemon[selectedNokemonIndex];
+                    // Get special moves for this Nokemon, filter out already known moves
+                    const availableSpecialMoves = SPECIAL_MOVES_TUTOR[nokemonToTeach.name] || [];
+                    movesToTeach = availableSpecialMoves.filter(specialMove => 
+                        !nokemonToTeach.moves.some(currentMove => currentMove.name === specialMove.name)
+                    );
+                    selectedMoveIndex = 0;
+                    moveTutorPhase = 'move_selection';
+                    audioSystem.playSound('menu');
+                }
+            } else if (e.key === 'Escape') {
+                currentState = GAME_STATE.EXPLORING;
+                audioSystem.playSound('menu');
+            }
+        } else if (moveTutorPhase === 'move_selection') {
+            if (e.key === 'ArrowUp') {
+                if (movesToTeach.length > 0) {
+                    selectedMoveIndex = (selectedMoveIndex - 1 + movesToTeach.length) % movesToTeach.length;
+                    audioSystem.playSound('menu');
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (movesToTeach.length > 0) {
+                    selectedMoveIndex = (selectedMoveIndex + 1) % movesToTeach.length;
+                    audioSystem.playSound('menu');
+                }
+            } else if (e.key === 'Enter') {
+                if (movesToTeach.length > 0) {
+                    const chosenMove = movesToTeach[selectedMoveIndex];
+                    if (nokemonToTeach.moves.length < 4) {
+                        nokemonToTeach.moves.push(chosenMove);
+                        battleMessage = `${nokemonToTeach.name} learned ${chosenMove.name}!`;
+                        battleMessageTimer = 120;
+                        currentState = GAME_STATE.EXPLORING; // Or back to nokemon_selection for another?
+                        audioSystem.playSound('levelUp'); // Or a different sound for move taught
+                    } else {
+                        moveReplaceIndex = 0;
+                        moveTutorPhase = 'replace_move_selection';
+                        audioSystem.playSound('menu');
+                    }
+                } else {
+                    // No moves to teach, go back
+                    moveTutorPhase = 'nokemon_selection';
+                    audioSystem.playSound('menu');
+                }
+            } else if (e.key === 'Escape') {
+                moveTutorPhase = 'nokemon_selection';
+                audioSystem.playSound('menu');
+            }
+        } else if (moveTutorPhase === 'replace_move_selection') {
+            if (e.key === 'ArrowUp') {
+                moveReplaceIndex = (moveReplaceIndex - 1 + nokemonToTeach.moves.length) % nokemonToTeach.moves.length;
+                audioSystem.playSound('menu');
+            } else if (e.key === 'ArrowDown') {
+                moveReplaceIndex = (moveReplaceIndex + 1) % nokemonToTeach.moves.length;
+                audioSystem.playSound('menu');
+            } else if (e.key === 'Enter') {
+                const chosenMoveToLearn = movesToTeach[selectedMoveIndex];
+                nokemonToTeach.moves[moveReplaceIndex] = chosenMoveToLearn;
+                battleMessage = `${nokemonToTeach.name} forgot a move and learned ${chosenMoveToLearn.name}!`;
+                battleMessageTimer = 120;
+                currentState = GAME_STATE.EXPLORING; // Or back to nokemon_selection?
+                audioSystem.playSound('levelUp'); // Or a different sound
+            } else if (e.key === 'Escape') {
+                moveTutorPhase = 'move_selection'; // Go back to selecting a special move
+                audioSystem.playSound('menu');
+            }
+        }
     }
 
     // Update menu selection sound
@@ -1004,6 +1089,23 @@ function update() {
         if (inHealingCenter && keys['h']) {
             currentState = GAME_STATE.HEALING;
             healAllNokemon();
+        }
+
+        // Handle Move Tutor interaction
+        if (currentArea === 'advanced') {
+            const onMoveTutorSquare = 
+                player.x + player.width > moveTutorSquare.x &&
+                player.x < moveTutorSquare.x + moveTutorSquare.size &&
+                player.y + player.height > moveTutorSquare.y &&
+                player.y < moveTutorSquare.y + moveTutorSquare.size;
+
+            if (onMoveTutorSquare && keys['m']) {
+                console.log('Activating Move Tutor');
+                currentState = GAME_STATE.MOVE_TUTOR;
+                selectedNokemonIndex = 0; // Reset selection for Nokemon choice
+                selectedMoveIndex = 0; // Reset selection for move choice
+                audioSystem.playSound('menu'); 
+            }
         }
     }
 
@@ -1231,7 +1333,16 @@ function useMove(moveIndex) {
         // Handle attack moves
         const damage = calculateDamage(battleNokemon, currentWildNokemon, move);
         currentWildNokemon.hp -= damage;
-        battleMessage = `${battleNokemon.name} used ${move.name}! Dealt ${damage} damage!`;
+        let message = `${battleNokemon.name} used ${move.name}! Dealt ${damage} damage!`;
+
+        // HP Absorption for specific moves
+        if (move.name === 'Giga Drain' || move.name === 'Absorb') {
+            const healedAmount = Math.floor(damage / 2); // Heal 50% of damage dealt
+            battleNokemon.hp = Math.min(battleNokemon.maxHp, battleNokemon.hp + healedAmount);
+            message += ` ${battleNokemon.name} absorbed ${healedAmount} HP!`;
+        }
+        
+        battleMessage = message;
         battleMessageTimer = 60;
         isPlayerTurn = false;
         console.log('Dealt damage:', damage);
@@ -1299,7 +1410,16 @@ function wildNokemonTurn() {
     } else {
         const wildDamage = calculateDamage(currentWildNokemon, battleNokemon, wildMove);
         battleNokemon.hp -= wildDamage;
-        battleMessage = `Wild ${currentWildNokemon.name} used ${wildMove.name}! Dealt ${wildDamage} damage!`;
+        let message = `Wild ${currentWildNokemon.name} used ${wildMove.name}! Dealt ${wildDamage} damage!`;
+
+        // HP Absorption for specific moves (for wild Nokemon)
+        if (wildMove.name === 'Giga Drain' || wildMove.name === 'Absorb') {
+            const healedAmount = Math.floor(wildDamage / 2); // Heal 50% of damage dealt
+            currentWildNokemon.hp = Math.min(currentWildNokemon.maxHp, currentWildNokemon.hp + healedAmount);
+            message += ` Wild ${currentWildNokemon.name} absorbed ${healedAmount} HP!`;
+        }
+
+        battleMessage = message;
         battleMessageTimer = 60;
         isPlayerTurn = true;
         console.log('Wild Nokemon dealt damage:', wildDamage);
@@ -2045,14 +2165,79 @@ function draw() {
     } else {
         // Draw area-specific elements
         if (currentArea === 'advanced') {
-            // Draw healing center
-            ctx.fillStyle = healingCenter.color;
-            ctx.fillRect(healingCenter.x, healingCenter.y, healingCenter.width, healingCenter.height);
+            // Draw Healing Center with new graphics
+            const hcX = healingCenter.x;
+            const hcY = healingCenter.y;
+            const hcWidth = healingCenter.width;
+            const hcHeight = healingCenter.height;
+
+            // Walls
+            ctx.fillStyle = healingCenter.wallColor;
+            ctx.fillRect(hcX, hcY, hcWidth, hcHeight);
+
+            // Roof
+            ctx.fillStyle = healingCenter.roofColor;
+            ctx.beginPath();
+            ctx.moveTo(hcX - 10, hcY);
+            ctx.lineTo(hcX + hcWidth + 10, hcY);
+            ctx.lineTo(hcX + hcWidth / 2, hcY - 30);
+            ctx.closePath();
+            ctx.fill();
+
+            // Door
+            ctx.fillStyle = healingCenter.doorColor;
+            ctx.fillRect(hcX + hcWidth / 2 - 15, hcY + hcHeight - 30, 30, 30);
+
+            // Window
+            ctx.fillStyle = healingCenter.windowColor;
+            ctx.fillRect(hcX + 15, hcY + 15, 25, 25);
+            ctx.fillStyle = '#000'; // Window Cross
+            ctx.fillRect(hcX + 15 + 11, hcY + 15, 3, 25);
+            ctx.fillRect(hcX + 15, hcY + 15 + 11, 25, 3);
+
+            // Sign
+            ctx.fillStyle = healingCenter.signColor;
+            ctx.fillRect(hcX + hcWidth / 2 - 25, hcY - 50, 50, 20);
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#FF0000'; // Red cross on sign
+            ctx.textAlign = 'center';
+            ctx.fillText('H', hcX + hcWidth / 2, hcY - 37);
+            
             ctx.font = '16px sans-serif';
             ctx.fillStyle = '#000';
             ctx.textAlign = 'center';
-            ctx.fillText('Healing Center', healingCenter.x + healingCenter.width/2, healingCenter.y + healingCenter.height/2);
-            ctx.fillText('Press H to heal', healingCenter.x + healingCenter.width/2, healingCenter.y + healingCenter.height/2 + 20);
+            ctx.fillText('Press H to heal', hcX + hcWidth/2, hcY + hcHeight + 20);
+
+            // Draw Move Tutor Square (glowing)
+            const mtsX = moveTutorSquare.x;
+            const mtsY = moveTutorSquare.y;
+            const mtsSize = moveTutorSquare.size;
+            const glowRadius = mtsSize * 0.5 * (1 + Math.sin(Date.now() / 300) * 0.2); // Pulsating glow
+
+            // Outer glow
+            ctx.beginPath();
+            ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius + 5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 191, 255, 0.3)'; // Lighter, more transparent glow
+            ctx.fill();
+
+            // Inner glow
+            ctx.beginPath();
+            ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius, 0, Math.PI * 2);
+            ctx.fillStyle = moveTutorSquare.glowColor;
+            ctx.fill();
+
+            // Base square
+            ctx.fillStyle = moveTutorSquare.baseColor;
+            ctx.fillRect(mtsX, mtsY, mtsSize, mtsSize);
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.strokeRect(mtsX, mtsY, mtsSize, mtsSize);
+
+            // Text for Move Tutor
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.fillText('Teach', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 5);
+            ctx.fillText('(M)', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 20);
 
             // Draw new area grass
             newAreaGrassPatches.forEach(patch => {
@@ -2134,6 +2319,8 @@ function draw() {
         drawMoveLearningScreen();
     } else if (currentState === GAME_STATE.EVOLUTION) {
         drawEvolutionScreen();
+    } else if (currentState === GAME_STATE.MOVE_TUTOR) {
+        drawMoveTutorScreen();
     }
 }
 
@@ -2247,6 +2434,37 @@ const EVOLUTIONS = {
     'Aquafin': { level: 16, evolvesTo: 'Aquashark', stats: { hp: 9, attack: 4, defense: 6 } }
 };
 
+const SPECIAL_MOVES_TUTOR = {
+    'Leaflet': [
+        { name: 'Giga Drain', power: 75, type: 'GRASS', accuracy: 1, description: 'Absorbs HP from foe.' },
+        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' }
+    ],
+    'Leafblade': [
+        { name: 'Giga Drain', power: 75, type: 'GRASS', accuracy: 1, description: 'Absorbs HP from foe.' },
+        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' },
+        { name: 'Leaf Storm', power: 130, type: 'GRASS', accuracy: 0.9, description: 'Harshly lowers user Sp. Atk.' }
+    ],
+    'Flarepup': [
+        { name: 'Flamethrower', power: 90, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
+        { name: 'Fire Blast', power: 110, type: 'FIRE', accuracy: 0.85, description: 'May burn foe.' }
+    ],
+    'Flarehound': [
+        { name: 'Flamethrower', power: 90, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
+        { name: 'Fire Blast', power: 110, type: 'FIRE', accuracy: 0.85, description: 'May burn foe.' },
+        { name: 'Inferno', power: 100, type: 'FIRE', accuracy: 0.5, description: 'Always burns foe.' }
+    ],
+    'Aquafin': [
+        { name: 'Surf', power: 90, type: 'WATER', accuracy: 1, description: 'Hits adjacent foes.' },
+        { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' }
+    ],
+    'Aquashark': [
+        { name: 'Surf', power: 90, type: 'WATER', accuracy: 1, description: 'Hits adjacent foes.' },
+        { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' },
+        { name: 'Aqua Tail', power: 90, type: 'WATER', accuracy: 0.9, description: 'Powerful tail attack.' }
+    ],
+    // We can add more Nokemon and their specific special moves here
+};
+
 // Add variables for move learning and evolution
 let selectedNokemonForMoves = null;
 let availableMoves = [];
@@ -2348,3 +2566,94 @@ function drawEvolutionScreen() {
     ctx.font = '16px sans-serif';
     ctx.fillText('Press Enter to continue', canvas.width / 2, canvas.height / 2 + 50);
 }
+
+let moveTutorPhase = 'nokemon_selection'; // 'nokemon_selection', 'move_selection', 'replace_move_selection'
+let nokemonToTeach = null;
+let movesToTeach = [];
+let moveReplaceIndex = 0;
+
+function drawMoveTutorScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = '28px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+
+    if (moveTutorPhase === 'nokemon_selection') {
+        ctx.fillText('Choose a Nokemon to teach a special move:', canvas.width / 2, 60);
+        const allPlayerNokemon = [startingNokemon, ...playerNokemon].filter(n => n);
+        allPlayerNokemon.forEach((nokemon, index) => {
+            const y = 120 + index * 70;
+            ctx.fillStyle = index === selectedNokemonIndex ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(canvas.width / 2 - 200, y - 25, 400, 60);
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.strokeRect(canvas.width / 2 - 200, y - 25, 400, 60);
+
+            ctx.font = '20px sans-serif';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${nokemon.name} (Lv. ${nokemon.level})`, canvas.width / 2 - 180, y + 5);
+            ctx.font = '16px sans-serif';
+            ctx.fillText(`Type: ${nokemon.type}`, canvas.width / 2 - 180, y + 30);
+        });
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText('Use ↑/↓ to select, Enter to confirm, Escape to cancel.', canvas.width / 2, canvas.height - 40);
+    } else if (moveTutorPhase === 'move_selection') {
+        ctx.fillText(`Teach ${nokemonToTeach.name} which move?`, canvas.width / 2, 60);
+        if (movesToTeach.length === 0) {
+            ctx.fillText(`${nokemonToTeach.name} cannot learn any more special moves.`, canvas.width / 2, 150);
+        } else {
+            movesToTeach.forEach((move, index) => {
+                const y = 120 + index * 70;
+                ctx.fillStyle = index === selectedMoveIndex ? 'rgba(0, 200, 255, 0.3)' : 'rgba(0, 100, 150, 0.2)';
+                ctx.fillRect(canvas.width / 2 - 250, y - 25, 500, 60);
+                ctx.strokeStyle = '#00CCFF';
+                ctx.strokeRect(canvas.width / 2 - 250, y - 25, 500, 60);
+
+                ctx.font = '20px sans-serif';
+                ctx.fillStyle = MOVE_TYPES[move.type] ? MOVE_TYPES[move.type].color : '#FFFFFF';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${move.name} (${move.type})`, canvas.width / 2 - 230, y + 5);
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = '#DDDDDD';
+                ctx.fillText(`P: ${move.power} Acc: ${move.accuracy * 100}% - ${move.description}`, canvas.width / 2 - 230, y + 30);
+            });
+        }
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText('Use ↑/↓ to select, Enter to learn, Escape to go back.', canvas.width / 2, canvas.height - 40);
+    } else if (moveTutorPhase === 'replace_move_selection') {
+        ctx.fillText(`${nokemonToTeach.name} knows 4 moves. Replace which move?`, canvas.width / 2, 60);
+        const moveToLearn = movesToTeach[selectedMoveIndex];
+        ctx.fillText(`Teach: ${moveToLearn.name} (${moveToLearn.type})`, canvas.width / 2, 100);
+
+        nokemonToTeach.moves.forEach((move, index) => {
+            const y = 150 + index * 60;
+            ctx.fillStyle = index === moveReplaceIndex ? 'rgba(255, 100, 100, 0.3)' : 'rgba(150, 50, 50, 0.2)';
+            ctx.fillRect(canvas.width / 2 - 200, y - 20, 400, 50);
+            ctx.strokeStyle = '#FF6666';
+            ctx.strokeRect(canvas.width / 2 - 200, y - 20, 400, 50);
+
+            ctx.font = '18px sans-serif';
+            ctx.fillStyle = MOVE_TYPES[move.type] ? MOVE_TYPES[move.type].color : '#FFFFFF';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${index + 1}. ${move.name} (${move.type})`, canvas.width / 2 - 180, y + 10);
+        });
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText('Use ↑/↓ to select, Enter to replace, Escape to cancel learning this move.', canvas.width / 2, canvas.height - 40);
+    }
+}
+
+const moveTutorSquare = {
+    x: 600, // Position it in the advanced area
+    y: 100,
+    size: 40,
+    baseColor: 'rgba(0, 191, 255, 0.7)', // Deep sky blue with some transparency
+    glowColor: 'rgba(0, 191, 255, 1)'
+};
