@@ -2166,8 +2166,25 @@ function tryCatch() {
         battleMessage = `Gotcha! ${caughtNokemon.name} was caught!`;
         battleMessageTimer = 60;
         
+        // Give experience to the battling Nokemon
         setTimeout(() => {
-            endBattle();
+            // Level up the battling Nokemon
+            levelUp(battleNokemon);
+            
+            // Update the original Nokemon's stats
+            const allNokemon = [startingNokemon, ...playerNokemon];
+            const originalNokemon = allNokemon[selectedNokemonIndex];
+            if (originalNokemon) {
+                originalNokemon.level = battleNokemon.level;
+                originalNokemon.maxHp = battleNokemon.maxHp;
+                originalNokemon.hp = battleNokemon.hp;
+                originalNokemon.attack = battleNokemon.attack;
+                originalNokemon.defense = battleNokemon.defense;
+            }
+            
+            setTimeout(() => {
+                endBattle();
+            }, 2000);
         }, 1000);
     } else {
         // Failed to catch
