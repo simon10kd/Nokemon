@@ -1,6 +1,348 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Add Nokemon Drawing Functions
+function drawLeaflet(ctx, x, y, radius) {
+    // Body
+    ctx.fillStyle = '#4CAF50'; // Green
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.8, radius, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Leaf on head
+    ctx.fillStyle = '#388E3C'; // Darker green
+    ctx.beginPath();
+    ctx.moveTo(x, y - radius);
+    ctx.quadraticCurveTo(x + radius * 0.5, y - radius * 1.5, x, y - radius * 2);
+    ctx.quadraticCurveTo(x - radius * 0.5, y - radius * 1.5, x, y - radius);
+    ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+    ctx.arc(x + radius * 0.3, y - radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawFlarepup(ctx, x, y, radius) {
+    // Body
+    ctx.fillStyle = '#FF5722'; // Orange
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears (triangles)
+    ctx.fillStyle = '#E64A19'; // Darker Orange
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.8, y - radius * 0.6);
+    ctx.lineTo(x - radius * 0.4, y - radius * 1.2);
+    ctx.lineTo(x, y - radius * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.8, y - radius * 0.6);
+    ctx.lineTo(x + radius * 0.4, y - radius * 1.2);
+    ctx.lineTo(x, y - radius * 0.8);
+    ctx.closePath();
+    ctx.fill();
+     // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.arc(x + radius * 0.3, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    // Snout
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.ellipse(x, y + radius * 0.3, radius * 0.4, radius * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawAquafin(ctx, x, y, radius) {
+    // Body
+    ctx.fillStyle = '#2196F3'; // Blue
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 1.2, radius * 0.8, 0, 0, Math.PI * 2); // Wider body
+    ctx.fill();
+    // Fin on top
+    ctx.fillStyle = '#1976D2'; // Darker Blue
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.2, y - radius * 0.8);
+    ctx.quadraticCurveTo(x, y - radius * 1.4, x + radius * 0.2, y - radius * 0.8);
+    ctx.lineTo(x - radius * 0.2, y - radius * 0.8);
+    ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.4, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.arc(x + radius * 0.4, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    // Bubbles (optional decoration)
+    ctx.fillStyle = 'rgba(173, 216, 230, 0.7)'; // Light blue bubbles
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.8, y + radius * 0.5, radius * 0.15, 0, Math.PI * 2);
+    ctx.arc(x + radius, y + radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Drawing function for Scamper (Normal)
+function drawScamper(ctx, x, y, radius) {
+    // Body (ellipse)
+    ctx.fillStyle = '#A8A878'; // Normal type greyish
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.9, radius * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears
+    ctx.fillStyle = '#C0C0A0'; // Lighter grey
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.6, y - radius * 0.7, radius * 0.3, Math.PI, 0); // Ear 1
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.6, y - radius * 0.7, radius * 0.3, Math.PI, 0); // Ear 2
+    ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 1
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.3, y - radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 2
+    // Tail (simple curve)
+    ctx.strokeStyle = '#A8A878';
+    ctx.lineWidth = Math.max(1, radius * 0.2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.9, y + radius * 0.3);
+    ctx.quadraticCurveTo(x + radius * 1.3, y, x + radius * 1.2, y - radius * 0.5);
+    ctx.stroke();
+}
+
+// Drawing function for Skywing (Flying)
+function drawSkywing(ctx, x, y, radius) {
+    // Body
+    ctx.fillStyle = '#A890F0'; // Flying type lavender
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.7, radius, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Wings
+    ctx.fillStyle = '#C8B0FF'; // Lighter lavender
+    ctx.beginPath(); // Left Wing
+    ctx.moveTo(x - radius * 0.5, y - radius * 0.2);
+    ctx.quadraticCurveTo(x - radius * 1.5, y - radius * 0.8, x - radius * 0.8, y + radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath(); // Right Wing
+    ctx.moveTo(x + radius * 0.5, y - radius * 0.2);
+    ctx.quadraticCurveTo(x + radius * 1.5, y - radius * 0.8, x + radius * 0.8, y + radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    // Eyes (dots)
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.2, y - radius * 0.3, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 1
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.2, y - radius * 0.3, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 2
+    // Beak
+    ctx.fillStyle = '#F8D030'; // Yellow beak
+    ctx.beginPath();
+    ctx.moveTo(x, y - radius * 0.1);
+    ctx.lineTo(x - radius * 0.15, y + radius * 0.1);
+    ctx.lineTo(x + radius * 0.15, y + radius * 0.1);
+    ctx.closePath();
+    ctx.fill();
+}
+
+// Drawing function for Blazepup (Fire - distinct from Flarepup)
+function drawBlazepup(ctx, x, y, radius) {
+    // Body (rounder than Flarepup)
+    ctx.fillStyle = '#F08030'; // Fire type orange
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    // Head Flame
+    ctx.fillStyle = '#FFBF00'; // Yellow flame
+    ctx.beginPath();
+    ctx.moveTo(x, y - radius * 0.8);
+    ctx.bezierCurveTo(x - radius * 0.3, y - radius * 1.5, x + radius * 0.3, y - radius * 1.5, x, y - radius * 0.8); // Simplified flame top
+    ctx.lineTo(x + radius * 0.2, y - radius * 1.1);
+    ctx.lineTo(x, y - radius * 1.4);
+    ctx.lineTo(x - radius * 0.2, y - radius * 1.1);
+    ctx.closePath();
+    ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 1
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.3, y - radius * 0.2, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill(); // Eye 2
+     // Paws (small circles)
+    ctx.fillStyle = '#D2691E'; // Brownish paws
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.5, y + radius * 0.7, radius * 0.2, 0, Math.PI * 2); // Paw 1
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.5, y + radius * 0.7, radius * 0.2, 0, Math.PI * 2); // Paw 2
+    ctx.fill();
+}
+
+// Drawing function for Sproutling (Grass - distinct from Leaflet)
+function drawSproutling(ctx, x, y, radius) {
+    // Body (seed shape)
+    ctx.fillStyle = '#78C850'; // Grass type green
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.7, radius, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Sprout on top
+    ctx.fillStyle = '#98FB98'; // Pale green
+    ctx.beginPath(); // First leaf
+    ctx.moveTo(x, y - radius);
+    ctx.quadraticCurveTo(x + radius * 0.6, y - radius * 1.8, x + radius * 0.1, y - radius * 2.2);
+    ctx.quadraticCurveTo(x - radius * 0.4, y - radius * 1.8, x, y - radius);
+    ctx.fill();
+    ctx.beginPath(); // Second leaf (mirrored)
+    ctx.moveTo(x, y - radius);
+    ctx.quadraticCurveTo(x - radius * 0.6, y - radius * 1.8, x - radius * 0.1, y - radius * 2.2);
+    ctx.quadraticCurveTo(x + radius * 0.4, y - radius * 1.8, x, y - radius);
+    ctx.fill();
+    // Eyes (closed/sleepy)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = Math.max(1, radius * 0.05); // Ensure lineWidth is at least 1
+    ctx.beginPath(); // Eye 1
+    ctx.arc(x - radius * 0.25, y - radius * 0.1, radius * 0.15, Math.PI * 0.2, Math.PI * 0.8);
+    ctx.stroke();
+    ctx.beginPath(); // Eye 2
+    ctx.arc(x + radius * 0.25, y - radius * 0.1, radius * 0.15, Math.PI * 0.2, Math.PI * 0.8);
+    ctx.stroke();
+}
+
+// Drawing function for Flametail (Fire - distinct from others)
+function drawFlametail(ctx, x, y, radius) {
+    // Body (more oval)
+    ctx.fillStyle = '#F08030'; // Fire type orange
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 1.1, radius * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tail Flame
+    const tailBaseX = x + radius * 0.7; // Attach tail closer to body
+    const tailBaseY = y;
+    ctx.fillStyle = '#FFEA00'; // Yellow base
+    ctx.beginPath();
+    ctx.moveTo(tailBaseX, tailBaseY);
+    ctx.bezierCurveTo(tailBaseX + radius * 0.5, tailBaseY - radius,       tailBaseX + radius * 1.5, tailBaseY - radius * 0.5, tailBaseX + radius * 0.8, tailBaseY + radius * 0.2);
+    ctx.bezierCurveTo(tailBaseX + radius * 1.2, tailBaseY + radius,       tailBaseX + radius * 0.3, tailBaseY + radius * 0.8, tailBaseX, tailBaseY);
+    ctx.fill();
+    ctx.fillStyle = '#FF8C00'; // Orange inner flame
+    ctx.beginPath();
+    ctx.moveTo(tailBaseX, tailBaseY);
+    ctx.bezierCurveTo(tailBaseX + radius * 0.3, tailBaseY - radius*0.6,    tailBaseX + radius * 0.8, tailBaseY - radius * 0.3, tailBaseX + radius * 0.4, tailBaseY + radius * 0.1);
+    ctx.bezierCurveTo(tailBaseX + radius * 0.6, tailBaseY + radius*0.6,    tailBaseX + radius * 0.1, tailBaseY + radius * 0.4, tailBaseX, tailBaseY);
+    ctx.fill();
+    // Eyes (fierce - simplified)
+    ctx.fillStyle = '#000000';
+    ctx.beginPath(); // Eye 1
+    ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath(); // Eye 2
+    ctx.arc(x + radius * 0.3, y - radius * 0.2, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Drawing function for Thunderwing (Legendary - Electric/Flying)
+function drawThunderwing(ctx, x, y, radius) {
+    // Body
+    ctx.fillStyle = '#F8D030'; // Electric yellow
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.8, radius * 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Wings (jagged, lightning-like)
+    ctx.fillStyle = '#FFEC8B'; // Lighter yellow
+    // Left Wing
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.6, y - radius * 0.3);
+    ctx.lineTo(x - radius * 1.5, y - radius * 1);
+    ctx.lineTo(x - radius * 1.2, y - radius * 0.5);
+    ctx.lineTo(x - radius * 1.8, y + radius * 0.2);
+    ctx.lineTo(x - radius * 1.0, y + radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    // Right Wing
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.6, y - radius * 0.3);
+    ctx.lineTo(x + radius * 1.5, y - radius * 1);
+    ctx.lineTo(x + radius * 1.2, y - radius * 0.5);
+    ctx.lineTo(x + radius * 1.8, y + radius * 0.2);
+    ctx.lineTo(x + radius * 1.0, y + radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    // Eyes (sharp - simplified)
+    ctx.fillStyle = '#000000';
+    ctx.beginPath(); // Eye 1
+    ctx.arc(x - radius * 0.25, y - radius * 0.5, radius * 0.1, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath(); // Eye 2
+    ctx.arc(x + radius * 0.25, y - radius * 0.5, radius * 0.1, 0, Math.PI*2);
+    ctx.fill();
+    // Lightning Bolt Mark (optional)
+    ctx.strokeStyle = '#4682B4'; // Steel blue
+    ctx.lineWidth = Math.max(1, radius * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.2, y + radius * 0.1);
+    ctx.lineTo(x + radius * 0.1, y + radius * 0.4);
+    ctx.lineTo(x - radius * 0.1, y + radius * 0.7);
+    ctx.stroke();
+}
+
+// Add Animation System Variables & Functions (Moved Here)
+let activeAnimations = [];
+const ANIMATION_TYPES = {
+    PROJECTILE: 'projectile',
+    SHAKE: 'shake'
+};
+
+function startAnimation(type, attackerSprite, defenderSprite, options = {}) {
+    const duration = options.duration || 30;
+    const animation = {
+        type: type,
+        startX: attackerSprite.x,
+        startY: attackerSprite.y,
+        endX: defenderSprite.x,
+        endY: defenderSprite.y,
+        targetSprite: defenderSprite,
+        progress: 0,
+        duration: duration,
+        color: options.color || '#FFFFFF',
+        size: options.size || 5,
+        amplitude: options.amplitude || 5,
+        frequency: options.frequency || 10,
+        id: Date.now() + Math.random()
+    };
+    activeAnimations.push(animation);
+    console.log(`Starting animation: ${type}`, animation);
+}
+
+function updateAnimations() {
+    activeAnimations = activeAnimations.filter(anim => {
+        anim.progress++;
+        return anim.progress < anim.duration;
+    });
+}
+
+function drawAnimations(ctx) {
+    activeAnimations.forEach(anim => {
+        if (anim.type === ANIMATION_TYPES.PROJECTILE) {
+            const t = anim.progress / anim.duration;
+            const currentX = anim.startX + (anim.endX - anim.startX) * t;
+            const currentY = anim.startY + (anim.endY - anim.startY) * t;
+            ctx.fillStyle = anim.color;
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, anim.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+}
+
 // Wild Nokemon templates
 const wildNokemonTemplates = {
     common: [
@@ -18,7 +360,8 @@ const wildNokemonTemplates = {
                     power: 90,
                     type: 'NORMAL',
                     accuracy: 0.95,
-                    description: 'A basic attack'
+                    description: 'A basic attack',
+                    animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 }
                 },
                 {
                     name: 'Quick Attack',
@@ -30,7 +373,8 @@ const wildNokemonTemplates = {
             ],
             sprite: {
                 color: '#A8A878',
-                radius: 15
+                radius: 15,
+                drawFunction: drawScamper
             }
         },
         {
@@ -59,7 +403,8 @@ const wildNokemonTemplates = {
             ],
             sprite: {
                 color: '#A890F0',
-                radius: 15
+                radius: 15,
+                drawFunction: drawSkywing
             }
         }
     ],
@@ -78,19 +423,22 @@ const wildNokemonTemplates = {
                     power: 105,
                     type: 'FIRE',
                     accuracy: 0.9,
-                    description: 'A fire attack'
+                    description: 'A fire attack',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#F08030', duration: 40, size: 6 }
                 },
                 {
                     name: 'Bite',
                     power: 105,
                     type: 'NORMAL',
                     accuracy: 0.9,
-                    description: 'A strong bite'
+                    description: 'A strong bite',
+                    animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 4 }
                 }
             ],
             sprite: {
                 color: '#F08030',
-                radius: 18
+                radius: 18,
+                drawFunction: drawBlazepup
             }
         },
         {
@@ -107,19 +455,22 @@ const wildNokemonTemplates = {
                     power: 90,
                     type: 'GRASS',
                     accuracy: 0.95,
-                    description: 'Steals HP'
+                    description: 'Steals HP',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#78C850', duration: 45, size: 5 }
                 },
                 {
                     name: 'Acid',
                     power: 105,
                     type: 'POISON',
                     accuracy: 0.9,
-                    description: 'A poisonous attack'
+                    description: 'A poisonous attack',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#A040A0', duration: 40, size: 4 }
                 }
             ],
             sprite: {
                 color: '#78C850',
-                radius: 16
+                radius: 16,
+                drawFunction: drawSproutling
             }
         }
     ],
@@ -138,7 +489,8 @@ const wildNokemonTemplates = {
                     power: 105,
                     type: 'FIRE',
                     accuracy: 0.9,
-                    description: 'A fire attack'
+                    description: 'A fire attack',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#F08030', duration: 40, size: 6 }
                 },
                 {
                     name: 'Quick Attack',
@@ -162,7 +514,8 @@ const wildNokemonTemplates = {
             ],
             sprite: {
                 color: '#F08030',
-                radius: 20
+                radius: 20,
+                drawFunction: drawFlametail
             }
         },
         {
@@ -179,14 +532,16 @@ const wildNokemonTemplates = {
                     power: 105,
                     type: 'WATER',
                     accuracy: 0.9,
-                    description: 'A water attack'
+                    description: 'A water attack',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#6890F0', duration: 40, size: 6 }
                 },
                 {
                     name: 'Bubble',
                     power: 90,
                     type: 'WATER',
                     accuracy: 0.95,
-                    description: 'A bubble attack'
+                    description: 'A bubble attack',
+                    animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#ADD8E6', duration: 50, size: 4 }
                 },
                 {
                     name: 'Hypnosis',
@@ -203,7 +558,8 @@ const wildNokemonTemplates = {
             ],
             sprite: {
                 color: '#6890F0',
-                radius: 18
+                radius: 18,
+                drawFunction: drawAquafin
             }
         }
     ]
@@ -224,6 +580,60 @@ const GAME_STATE = {
     EVOLUTION: 'evolution',  // New state
     MOVE_TUTOR: 'move_tutor' // New state for Move Tutor
 };
+
+// Add transition animation variables
+let isTransitioning = false;
+let transitionAlpha = 0;
+let transitionDuration = 60; // frames for transition (1 second at 60fps)
+let transitionDirection = 1; // 1 for fade out, -1 for fade in
+
+
+
+
+// Add Animation Management Functions
+function startAnimation(type, attackerSprite, defenderSprite, options = {}) {
+    const duration = options.duration || 30; // Default duration 30 frames
+    const animation = {
+        type: type,
+        startX: attackerSprite.x,
+        startY: attackerSprite.y,
+        endX: defenderSprite.x,
+        endY: defenderSprite.y,
+        targetSprite: defenderSprite, // Store reference for shake target
+        progress: 0,
+        duration: duration,
+        color: options.color || '#FFFFFF', // Default color white
+        size: options.size || 5,         // Default size for projectiles
+        amplitude: options.amplitude || 5, // Shake amplitude
+        frequency: options.frequency || 10, // Shake frequency
+        id: Date.now() + Math.random() // Unique ID
+    };
+    activeAnimations.push(animation);
+    console.log(`Starting animation: ${type}`, animation);
+}
+
+function updateAnimations() {
+    activeAnimations = activeAnimations.filter(anim => {
+        anim.progress++;
+        return anim.progress < anim.duration;
+    });
+}
+
+function drawAnimations(ctx) {
+    activeAnimations.forEach(anim => {
+        if (anim.type === ANIMATION_TYPES.PROJECTILE) {
+            const t = anim.progress / anim.duration; // Normalize progress (0 to 1)
+            const currentX = anim.startX + (anim.endX - anim.startX) * t;
+            const currentY = anim.startY + (anim.endY - anim.startY) * t;
+
+            ctx.fillStyle = anim.color;
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, anim.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // Shake animation is handled by offsetting the drawing position
+    });
+}
 
 // Add tutorial variables
 let currentTutorialStep = 0;
@@ -311,21 +721,24 @@ const starterNokemon = [
                 power: 90,
                 type: 'NORMAL',
                 accuracy: 0.95,
-                description: 'A basic attack'
+                description: 'A basic attack',
+                animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 }
             },
             {
                 name: 'Vine Whip',
                 power: 105,
                 type: 'GRASS',
                 accuracy: 0.9,
-                description: 'A grass-type attack'
+                description: 'A grass-type attack',
+                animation: { type: ANIMATION_TYPES.SHAKE, duration: 25, amplitude: 4 }
             },
             {
                 name: 'Leaf Storm',
                 power: 135,
                 type: 'GRASS',
                 accuracy: 0.8,
-                description: 'A powerful grass attack'
+                description: 'A powerful grass attack',
+                animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#388E3C', duration: 35, size: 7 }
             },
             {
                 name: 'Growth',
@@ -343,7 +756,8 @@ const starterNokemon = [
             x: 50,
             y: 50,
             radius: 20,
-            color: '#4CAF50'
+            color: '#4CAF50',
+            drawFunction: drawLeaflet // Add draw function
         }
     },
     {
@@ -360,21 +774,24 @@ const starterNokemon = [
                 power: 90,
                 type: 'NORMAL',
                 accuracy: 0.95,
-                description: 'A basic attack'
+                description: 'A basic attack',
+                animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 }
             },
             {
                 name: 'Ember',
                 power: 105,
                 type: 'FIRE',
                 accuracy: 0.9,
-                description: 'A fire-type attack'
+                description: 'A fire-type attack',
+                animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#F08030', duration: 40, size: 6 }
             },
             {
                 name: 'Flame Burst',
                 power: 135,
                 type: 'FIRE',
                 accuracy: 0.8,
-                description: 'A powerful fire attack'
+                description: 'A powerful fire attack',
+                animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#FF5722', duration: 30, size: 8 }
             },
             {
                 name: 'Howl',
@@ -392,7 +809,8 @@ const starterNokemon = [
             x: 50,
             y: 50,
             radius: 20,
-            color: '#FF5722'
+            color: '#FF5722',
+            drawFunction: drawFlarepup // Add draw function
         }
     },
     {
@@ -409,21 +827,24 @@ const starterNokemon = [
                 power: 90,
                 type: 'NORMAL',
                 accuracy: 0.95,
-                description: 'A basic attack'
+                description: 'A basic attack',
+                animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 }
             },
             {
                 name: 'Water Gun',
                 power: 105,
                 type: 'WATER',
                 accuracy: 0.9,
-                description: 'A water-type attack'
+                description: 'A water-type attack',
+                animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#6890F0', duration: 40, size: 6 }
             },
             {
                 name: 'Bubble Beam',
                 power: 135,
                 type: 'WATER',
                 accuracy: 0.8,
-                description: 'A powerful water attack'
+                description: 'A powerful water attack',
+                animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#ADD8E6', duration: 50, size: 4 }
             },
             {
                 name: 'Harden',
@@ -441,7 +862,8 @@ const starterNokemon = [
             x: 50,
             y: 50,
             radius: 20,
-            color: '#2196F3'
+            color: '#2196F3',
+            drawFunction: drawAquafin // Add draw function
         }
     }
 ];
@@ -562,7 +984,8 @@ const legendaryNokemon = {
     ],
     sprite: {
         color: '#F8D030',
-        radius: 25
+        radius: 25,
+        drawFunction: drawThunderwing
     }
 };
 
@@ -1073,14 +1496,34 @@ function update() {
     }
 
     // Handle area transition
-    if (keys['t'] && canAccessNewArea) {
-        currentArea = currentArea === 'starter' ? 'advanced' : 'starter';
-        // Reset player position when changing areas
-        player.x = canvas.width / 2 - 16;
-        player.y = canvas.height / 2 - 16;
-        battleMessage = `Welcome to the ${currentArea === 'advanced' ? 'Advanced' : 'Starter'} Area!`;
-        battleMessageTimer = 120;
+    if (keys['t'] && canAccessNewArea && !isTransitioning) {
+        isTransitioning = true;
+        transitionDirection = 1; // Start fading out
+        transitionAlpha = 0;
+        audioSystem.playSound('menu');
     }
+
+    // Add transition update logic in the update function
+    if (isTransitioning) {
+        transitionAlpha += transitionDirection * (1 / transitionDuration);
+        
+        if (transitionAlpha >= 1) {
+            // Switch areas when fully faded out
+            currentArea = currentArea === 'starter' ? 'advanced' : 'starter';
+            // Reset player position when changing areas
+            player.x = canvas.width / 2 - 16;
+            player.y = canvas.height / 2 - 16;
+            transitionDirection = -1; // Start fading in
+        } else if (transitionAlpha <= 0 && transitionDirection === -1) {
+            // End transition when fully faded in
+            isTransitioning = false;
+            battleMessage = `Welcome to the ${currentArea === 'advanced' ? 'Advanced' : 'Starter'} Area!`;
+            battleMessageTimer = 120;
+        }
+    }
+
+    // Update animations
+    updateAnimations();
 
     // Handle healing center
     if (currentState === GAME_STATE.EXPLORING) {
@@ -1229,30 +1672,30 @@ function endBattle() {
 // Update move learning data with more diverse moves
 const MOVE_LEARNING = {
     'Leaflet': [
-        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
-        { level: 5, move: { name: 'Vine Whip', power: 105, type: 'GRASS', accuracy: 0.9, description: 'A grass-type attack' } },
-        { level: 8, move: { name: 'Razor Leaf', power: 120, type: 'GRASS', accuracy: 0.85, description: 'Sharp leaves cut the target' } },
-        { level: 12, move: { name: 'Leaf Storm', power: 135, type: 'GRASS', accuracy: 0.8, description: 'A powerful grass attack' } },
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 } } },
+        { level: 5, move: { name: 'Vine Whip', power: 105, type: 'GRASS', accuracy: 0.9, description: 'A grass-type attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 25, amplitude: 4 } } },
+        { level: 8, move: { name: 'Razor Leaf', power: 120, type: 'GRASS', accuracy: 0.85, description: 'Sharp leaves cut the target', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#4CAF50', duration: 35, size: 5 } } },
+        { level: 12, move: { name: 'Leaf Storm', power: 135, type: 'GRASS', accuracy: 0.8, description: 'A powerful grass attack', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#388E3C', duration: 35, size: 7 } } },
         { level: 15, move: { name: 'Synthesis', power: 0, type: 'GRASS', accuracy: 1, description: 'Restores HP', effect: (user, target) => {
             user.hp = Math.min(user.maxHp, user.hp + Math.floor(user.maxHp * 0.3));
             return `${user.name} restored HP!`;
         }}}
     ],
     'Flarepup': [
-        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
-        { level: 5, move: { name: 'Ember', power: 105, type: 'FIRE', accuracy: 0.9, description: 'A fire-type attack' } },
-        { level: 8, move: { name: 'Flame Charge', power: 115, type: 'FIRE', accuracy: 0.9, description: 'A quick fire attack' } },
-        { level: 12, move: { name: 'Flame Burst', power: 135, type: 'FIRE', accuracy: 0.8, description: 'A powerful fire attack' } },
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 } } },
+        { level: 5, move: { name: 'Ember', power: 105, type: 'FIRE', accuracy: 0.9, description: 'A fire-type attack', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#F08030', duration: 40, size: 6 } } },
+        { level: 8, move: { name: 'Flame Charge', power: 115, type: 'FIRE', accuracy: 0.9, description: 'A quick fire attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 15, amplitude: 5 } } },
+        { level: 12, move: { name: 'Flame Burst', power: 135, type: 'FIRE', accuracy: 0.8, description: 'A powerful fire attack', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#FF5722', duration: 30, size: 8 } } },
         { level: 15, move: { name: 'Sunny Day', power: 0, type: 'FIRE', accuracy: 1, description: 'Boosts fire moves', effect: (user, target) => {
             user.attack = Math.floor(user.attack * 1.3);
             return `${user.name}'s fire moves are stronger!`;
         }}}
     ],
     'Aquafin': [
-        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
-        { level: 5, move: { name: 'Water Gun', power: 105, type: 'WATER', accuracy: 0.9, description: 'A water-type attack' } },
-        { level: 8, move: { name: 'Aqua Jet', power: 115, type: 'WATER', accuracy: 0.95, description: 'A fast water attack' } },
-        { level: 12, move: { name: 'Bubble Beam', power: 135, type: 'WATER', accuracy: 0.8, description: 'A powerful water attack' } },
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 } } },
+        { level: 5, move: { name: 'Water Gun', power: 105, type: 'WATER', accuracy: 0.9, description: 'A water-type attack', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#6890F0', duration: 40, size: 6 } } },
+        { level: 8, move: { name: 'Aqua Jet', power: 115, type: 'WATER', accuracy: 0.95, description: 'A fast water attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 15, amplitude: 5 } } },
+        { level: 12, move: { name: 'Bubble Beam', power: 135, type: 'WATER', accuracy: 0.8, description: 'A powerful water attack', animation: { type: ANIMATION_TYPES.PROJECTILE, color: '#ADD8E6', duration: 50, size: 4 } } },
         { level: 15, move: { name: 'Rain Dance', power: 0, type: 'WATER', accuracy: 1, description: 'Boosts water moves', effect: (user, target) => {
             user.attack = Math.floor(user.attack * 1.3);
             return `${user.name}'s water moves are stronger!`;
@@ -1260,10 +1703,10 @@ const MOVE_LEARNING = {
     ],
     // Adding new Wild Nokemon level-up moves
     'Scamper': [
-        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
+        { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 3 } } },
         { level: 4, move: { name: 'Tail Whip', power: 0, type: 'NORMAL', accuracy: 1, description: 'Lowers foe Defense.', effect: (u,t) => { t.defense = Math.max(10, t.defense - 10); return `${t.name}'s Defense fell!`; } } },
-        { level: 8, move: { name: 'Quick Attack', power: 75, type: 'NORMAL', accuracy: 1, description: 'A fast attack' } },
-        { level: 12, move: { name: 'Bite', power: 105, type: 'NORMAL', accuracy: 0.9, description: 'A strong bite' } }
+        { level: 8, move: { name: 'Quick Attack', power: 75, type: 'NORMAL', accuracy: 1, description: 'A fast attack', animation: { type: ANIMATION_TYPES.SHAKE, duration: 15, amplitude: 2 } } },
+        { level: 12, move: { name: 'Bite', power: 105, type: 'NORMAL', accuracy: 0.9, description: 'A strong bite', animation: { type: ANIMATION_TYPES.SHAKE, duration: 20, amplitude: 4 } } }
     ],
     'Scampede': [
         { level: 1, move: { name: 'Tackle', power: 90, type: 'NORMAL', accuracy: 0.95, description: 'A basic attack' } },
@@ -1390,77 +1833,85 @@ function useMove(moveIndex) {
     
     console.log('Attempting to use move:', move.name);
     
-    // Play attack sound
-    audioSystem.playSound('attack');
-    
-    // Check accuracy
+    // Check accuracy first
     if (Math.random() > move.accuracy) {
         battleMessage = `${battleNokemon.name}'s ${move.name} missed!`;
         battleMessageTimer = 60;
         isPlayerTurn = false;
         console.log('Move missed');
-        // Wild Nokemon's turn after player misses
         setTimeout(wildNokemonTurn, 1000);
         return;
     }
 
-    // Handle status moves
-    if (move.power === 0 && move.effect) {
-        battleMessage = move.effect(battleNokemon, currentWildNokemon);
-        battleMessageTimer = 60;
-        isPlayerTurn = false;
-        console.log('Used status move:', move.name);
-        // Wild Nokemon's turn after status move
-        setTimeout(wildNokemonTurn, 1000);
-    } else {
-        // Handle attack moves
-        const damage = calculateDamage(battleNokemon, currentWildNokemon, move);
-        currentWildNokemon.hp -= damage;
-        let message = `${battleNokemon.name} used ${move.name}! Dealt ${damage} damage!`;
+    // Play attack sound (keep this)
+    audioSystem.playSound('attack');
 
-        // HP Absorption for specific moves
-        if (move.name === 'Giga Drain' || move.name === 'Absorb') {
-            const healedAmount = Math.floor(damage / 2); // Heal 50% of damage dealt
-            battleNokemon.hp = Math.min(battleNokemon.maxHp, battleNokemon.hp + healedAmount);
-            message += ` ${battleNokemon.name} absorbed ${healedAmount} HP!`;
-        }
-        
-        battleMessage = message;
-        battleMessageTimer = 60;
-        isPlayerTurn = false;
-        console.log('Dealt damage:', damage);
-
-        // Check if wild Nokemon fainted
-        if (currentWildNokemon.hp <= 0) {
-            console.log('Wild Nokemon fainted');
-            setTimeout(() => {
-                battleMessage = 'Wild Nokemon fainted!';
-                battleMessageTimer = 60;
-                setTimeout(() => {
-                    // Level up after winning
-                    const levelUpMessage = levelUp(battleNokemon);
-                    // Update the original Nokemon's stats
-                    const allNokemon = [startingNokemon, ...playerNokemon];
-                    const originalNokemon = allNokemon[selectedNokemonIndex];
-                    originalNokemon.level = battleNokemon.level;
-                    originalNokemon.maxHp = battleNokemon.maxHp;
-                    originalNokemon.hp = battleNokemon.hp; // Keep the current HP
-                    originalNokemon.attack = battleNokemon.attack;
-                    originalNokemon.defense = battleNokemon.defense;
-                    
-                    battleMessage = levelUpMessage;
-                    battleMessageTimer = 120; // Longer message time for level up
-                    setTimeout(() => {
-                        endBattle();
-                    }, 2000);
-                }, 1000);
-            }, 1000);
-            return;
-        }
-
-        // Wild Nokemon's turn after successful attack
-        setTimeout(wildNokemonTurn, 1000);
+    // Start animation if defined for the move
+    if (move.animation) {
+        startAnimation(move.animation.type, battleNokemon.sprite, currentWildNokemon.sprite, move.animation);
     }
+
+    // Delay damage calculation/effect to allow animation to play partly
+    const animationDelay = move.animation?.duration ? move.animation.duration * 15 : 100; // Delay based on animation duration (ms) or default
+
+    setTimeout(() => {
+        // Handle status moves
+        if (move.power === 0 && move.effect) {
+            battleMessage = move.effect(battleNokemon, currentWildNokemon);
+            battleMessageTimer = 60;
+            isPlayerTurn = false;
+            console.log('Used status move:', move.name);
+            setTimeout(wildNokemonTurn, 1000);
+        } else {
+            // Handle attack moves
+            const damage = calculateDamage(battleNokemon, currentWildNokemon, move);
+            currentWildNokemon.hp -= damage;
+            let message = `${battleNokemon.name} used ${move.name}! Dealt ${damage} damage!`;
+
+            // HP Absorption for specific moves
+            if (move.name === 'Giga Drain' || move.name === 'Absorb') {
+                const healedAmount = Math.floor(damage / 2); // Heal 50% of damage dealt
+                battleNokemon.hp = Math.min(battleNokemon.maxHp, battleNokemon.hp + healedAmount);
+                message += ` ${battleNokemon.name} absorbed ${healedAmount} HP!`;
+            }
+            
+            battleMessage = message;
+            battleMessageTimer = 60;
+            isPlayerTurn = false;
+            console.log('Dealt damage:', damage);
+
+            // Check if wild Nokemon fainted
+            if (currentWildNokemon.hp <= 0) {
+                console.log('Wild Nokemon fainted');
+                setTimeout(() => {
+                    battleMessage = 'Wild Nokemon fainted!';
+                    battleMessageTimer = 60;
+                    setTimeout(() => {
+                        // Level up after winning
+                        const levelUpMessage = levelUp(battleNokemon);
+                        // Update the original Nokemon's stats
+                        const allNokemon = [startingNokemon, ...playerNokemon];
+                        const originalNokemon = allNokemon[selectedNokemonIndex];
+                        originalNokemon.level = battleNokemon.level;
+                        originalNokemon.maxHp = battleNokemon.maxHp;
+                        originalNokemon.hp = battleNokemon.hp; // Keep the current HP
+                        originalNokemon.attack = battleNokemon.attack;
+                        originalNokemon.defense = battleNokemon.defense;
+                        
+                        battleMessage = levelUpMessage;
+                        battleMessageTimer = 120; // Longer message time for level up
+                        setTimeout(() => {
+                            endBattle();
+                        }, 2000);
+                    }, 1000);
+                }, 1000);
+                return; // Stop further execution here if fainted
+            }
+
+            // Wild Nokemon's turn after successful attack
+            setTimeout(wildNokemonTurn, 1000);
+        }
+    }, animationDelay);
 }
 
 function wildNokemonTurn() {
@@ -1472,6 +1923,7 @@ function wildNokemonTurn() {
     const wildMove = currentWildNokemon.moves[Math.floor(Math.random() * currentWildNokemon.moves.length)];
     if (!wildMove) {
         console.log('Invalid wild Nokemon move');
+        isPlayerTurn = true; // Give turn back if move fails
         return;
     }
     
@@ -1485,64 +1937,80 @@ function wildNokemonTurn() {
         return;
     }
 
-    if (wildMove.power === 0 && wildMove.effect) {
-        battleMessage = wildMove.effect(currentWildNokemon, battleNokemon);
-        battleMessageTimer = 60;
-        isPlayerTurn = true;
-        console.log('Wild Nokemon used status move');
-    } else {
-        const wildDamage = calculateDamage(currentWildNokemon, battleNokemon, wildMove);
-        battleNokemon.hp -= wildDamage;
-        let message = `Wild ${currentWildNokemon.name} used ${wildMove.name}! Dealt ${wildDamage} damage!`;
+    // Play attack sound
+    audioSystem.playSound('attack');
 
-        // HP Absorption for specific moves (for wild Nokemon)
-        if (wildMove.name === 'Giga Drain' || wildMove.name === 'Absorb') {
-            const healedAmount = Math.floor(wildDamage / 2); // Heal 50% of damage dealt
-            currentWildNokemon.hp = Math.min(currentWildNokemon.maxHp, currentWildNokemon.hp + healedAmount);
-            message += ` Wild ${currentWildNokemon.name} absorbed ${healedAmount} HP!`;
+    // Start animation if defined
+    if (wildMove.animation) {
+        startAnimation(wildMove.animation.type, currentWildNokemon.sprite, battleNokemon.sprite, wildMove.animation);
+    }
+
+    // Delay damage calculation/effect
+    const animationDelay = wildMove.animation?.duration ? wildMove.animation.duration * 15 : 100;
+
+    setTimeout(() => {
+        if (wildMove.power === 0 && wildMove.effect) {
+            battleMessage = wildMove.effect(currentWildNokemon, battleNokemon);
+            battleMessageTimer = 60;
+            isPlayerTurn = true;
+            console.log('Wild Nokemon used status move');
+        } else {
+            const wildDamage = calculateDamage(currentWildNokemon, battleNokemon, wildMove);
+            battleNokemon.hp -= wildDamage;
+            let message = `Wild ${currentWildNokemon.name} used ${wildMove.name}! Dealt ${wildDamage} damage!`;
+
+            // HP Absorption for specific moves (for wild Nokemon)
+            if (wildMove.name === 'Giga Drain' || wildMove.name === 'Absorb') {
+                const healedAmount = Math.floor(wildDamage / 2); // Heal 50% of damage dealt
+                currentWildNokemon.hp = Math.min(currentWildNokemon.maxHp, currentWildNokemon.hp + healedAmount);
+                message += ` Wild ${currentWildNokemon.name} absorbed ${healedAmount} HP!`;
+            }
+
+            battleMessage = message;
+            battleMessageTimer = 60;
+            isPlayerTurn = true;
+            console.log('Wild Nokemon dealt damage:', wildDamage);
         }
 
-        battleMessage = message;
-        battleMessageTimer = 60;
-        isPlayerTurn = true;
-        console.log('Wild Nokemon dealt damage:', wildDamage);
-    }
+        // Check if player's Nokemon fainted
+        if (battleNokemon.hp <= 0) {
+            console.log('Player Nokemon fainted');
+            setTimeout(() => {
+                battleMessage = `${battleNokemon.name} fainted!`;
+                battleMessageTimer = 60;
+                
+                // Check if there are any other Nokemon available
+                const allNokemon = [startingNokemon, ...playerNokemon];
+                const availableNokemon = allNokemon.filter(nokemon => nokemon && nokemon.hp > 0);
+                
+                if (availableNokemon.length > 0) {
+                    setTimeout(() => {
+                        // Use the existing Nokemon instead of creating a copy
+                        const nextNokemon = availableNokemon[0];
+                        const nextIndex = allNokemon.indexOf(nextNokemon);
+                        
+                        // Update battle Nokemon to use the existing one
+                        battleNokemon = nextNokemon;
+                        selectedNokemonIndex = nextIndex;
+                        
+                        battleMessage = `Go! ${nextNokemon.name}!`;
+                        battleMessageTimer = 60;
+                        
+                        // Play switch sound
+                        audioSystem.playSound('menu');
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        endBattle();
+                        checkGameOver();
+                    }, 1000);
+                }
+            }, 1000);
+            // Ensure turn doesn't immediately pass back if fainted
+            isPlayerTurn = false; // Keep turn with fainting logic
+        }
 
-    // Check if player's Nokemon fainted
-    if (battleNokemon.hp <= 0) {
-        console.log('Player Nokemon fainted');
-        setTimeout(() => {
-            battleMessage = `${battleNokemon.name} fainted!`;
-            battleMessageTimer = 60;
-            
-            // Check if there are any other Nokemon available
-            const allNokemon = [startingNokemon, ...playerNokemon];
-            const availableNokemon = allNokemon.filter(nokemon => nokemon && nokemon.hp > 0);
-            
-            if (availableNokemon.length > 0) {
-                setTimeout(() => {
-                    // Use the existing Nokemon instead of creating a copy
-                    const nextNokemon = availableNokemon[0];
-                    const nextIndex = allNokemon.indexOf(nextNokemon);
-                    
-                    // Update battle Nokemon to use the existing one
-                    battleNokemon = nextNokemon;
-                    selectedNokemonIndex = nextIndex;
-                    
-                    battleMessage = `Go! ${nextNokemon.name}!`;
-                    battleMessageTimer = 60;
-                    
-                    // Play switch sound
-                    audioSystem.playSound('menu');
-                }, 1000);
-            } else {
-                setTimeout(() => {
-                    endBattle();
-                    checkGameOver();
-                }, 1000);
-            }
-        }, 1000);
-    }
+    }, animationDelay);
 }
 
 function run() {
@@ -1610,19 +2078,55 @@ function drawBattleScreen() {
     ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw player's Nokemon
-    ctx.beginPath();
-    ctx.arc(battleNokemon.sprite.x, battleNokemon.sprite.y, battleNokemon.sprite.radius, 0, Math.PI * 2);
-    ctx.fillStyle = battleNokemon.sprite.color;
-    ctx.fill();
-    ctx.closePath();
+    // Calculate shake offsets
+    let playerShakeX = 0, playerShakeY = 0;
+    let wildShakeX = 0, wildShakeY = 0;
 
-    // Draw wild Nokemon
-    ctx.beginPath();
-    ctx.arc(currentWildNokemon.sprite.x, currentWildNokemon.sprite.y, currentWildNokemon.sprite.radius, 0, Math.PI * 2);
-    ctx.fillStyle = currentWildNokemon.sprite.color;
-    ctx.fill();
-    ctx.closePath();
+    activeAnimations.forEach(anim => {
+        if (anim.type === ANIMATION_TYPES.SHAKE) {
+            const shakeProgress = anim.progress / anim.duration;
+            const shakeAngle = shakeProgress * Math.PI * anim.frequency;
+            const shakeOffset = Math.sin(shakeAngle) * anim.amplitude * (1 - shakeProgress); // Diminish shake over time
+
+            if (anim.targetSprite === battleNokemon.sprite) {
+                playerShakeX = shakeOffset;
+                playerShakeY = shakeOffset;
+            }
+            if (anim.targetSprite === currentWildNokemon.sprite) {
+                wildShakeX = shakeOffset;
+                wildShakeY = shakeOffset;
+            }
+        }
+    });
+
+    // Draw player's Nokemon with potential shake offset
+    const playerDrawX = battleNokemon.sprite.x + playerShakeX;
+    const playerDrawY = battleNokemon.sprite.y + playerShakeY;
+    if (battleNokemon.sprite.drawFunction) {
+        battleNokemon.sprite.drawFunction(ctx, playerDrawX, playerDrawY, battleNokemon.sprite.radius);
+    } else {
+        ctx.beginPath();
+        ctx.arc(playerDrawX, playerDrawY, battleNokemon.sprite.radius, 0, Math.PI * 2);
+        ctx.fillStyle = battleNokemon.sprite.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    // Draw wild Nokemon with potential shake offset
+    const wildDrawX = currentWildNokemon.sprite.x + wildShakeX;
+    const wildDrawY = currentWildNokemon.sprite.y + wildShakeY;
+    if (currentWildNokemon.sprite.drawFunction) {
+        currentWildNokemon.sprite.drawFunction(ctx, wildDrawX, wildDrawY, currentWildNokemon.sprite.radius);
+    } else {
+        ctx.beginPath();
+        ctx.arc(wildDrawX, wildDrawY, currentWildNokemon.sprite.radius, 0, Math.PI * 2);
+        ctx.fillStyle = currentWildNokemon.sprite.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    // Draw animations (projectiles etc.) OVER the Nokemon
+    drawAnimations(ctx);
 
     // Draw HP bars
     drawHPBar(battleNokemon, 50, 150);
@@ -1800,10 +2304,15 @@ function drawStarterSelection() {
         }
         
         // Draw Nokemon sprite
-        ctx.beginPath();
-        ctx.arc(x, y - 30, 30, 0, Math.PI * 2);
-        ctx.fillStyle = nokemon.sprite.color;
-        ctx.fill();
+        if (nokemon.sprite.drawFunction) {
+            nokemon.sprite.drawFunction(ctx, x, y - 30, 30); // Using radius 30 for selection screen
+        } else {
+             // Fallback to circle
+            ctx.beginPath();
+            ctx.arc(x, y - 30, 30, 0, Math.PI * 2);
+            ctx.fillStyle = nokemon.sprite.color;
+            ctx.fill();
+        }
         
         // Draw Nokemon info
         ctx.font = '20px sans-serif';
@@ -1893,11 +2402,16 @@ function drawNokemonSelection() {
     if (currentState === GAME_STATE.BATTLE || currentState === GAME_STATE.NOKEMON_SELECTION) {
         if (currentWildNokemon) {  // Add check for currentWildNokemon
             // Draw wild Nokemon sprite
-            ctx.beginPath();
-            ctx.arc(canvas.width - 100, 100, currentWildNokemon.sprite.radius, 0, Math.PI * 2);
-            ctx.fillStyle = currentWildNokemon.sprite.color;
-            ctx.fill();
-            
+            if (currentWildNokemon.sprite.drawFunction) {
+                currentWildNokemon.sprite.drawFunction(ctx, canvas.width - 100, 100, currentWildNokemon.sprite.radius);
+            } else {
+                // Fallback to circle
+                ctx.beginPath();
+                ctx.arc(canvas.width - 100, 100, currentWildNokemon.sprite.radius, 0, Math.PI * 2);
+                ctx.fillStyle = currentWildNokemon.sprite.color;
+                ctx.fill();
+            }
+
             // Draw wild Nokemon info
             ctx.font = '24px sans-serif';
             ctx.fillText(`A wild ${currentWildNokemon.name} appeared!`, canvas.width / 2, 100);
@@ -1935,10 +2449,18 @@ function drawNokemonSelection() {
         ctx.strokeRect((canvas.width - boxWidth) / 2, y, boxWidth, boxHeight);
 
         // Draw Nokemon sprite
-        ctx.beginPath();
-        ctx.arc((canvas.width - boxWidth) / 2 + 30, y + 40, 20, 0, Math.PI * 2);
-        ctx.fillStyle = nokemon.sprite.color;
-        ctx.fill();
+        const spriteX = (canvas.width - boxWidth) / 2 + 30;
+        const spriteY = y + 40;
+        const spriteRadius = 20;
+        if (nokemon.sprite.drawFunction) {
+            nokemon.sprite.drawFunction(ctx, spriteX, spriteY, spriteRadius);
+        } else {
+             // Fallback to circle
+            ctx.beginPath();
+            ctx.arc(spriteX, spriteY, spriteRadius, 0, Math.PI * 2);
+            ctx.fillStyle = nokemon.sprite.color;
+            ctx.fill();
+        }
 
         // Draw Nokemon info
         ctx.font = '20px sans-serif';
@@ -2028,10 +2550,18 @@ function drawPartyView() {
         ctx.strokeRect((canvas.width - boxWidth) / 2, y, boxWidth, boxHeight);
         
         // Draw Nokemon sprite
-        ctx.beginPath();
-        ctx.arc((canvas.width - boxWidth) / 2 + 20, y + 35, 15, 0, Math.PI * 2);
-        ctx.fillStyle = nokemon.sprite.color;
-        ctx.fill();
+        const spriteX = (canvas.width - boxWidth) / 2 + 20;
+        const spriteY = y + 35;
+        const spriteRadius = 15;
+        if (nokemon.sprite.drawFunction) {
+            nokemon.sprite.drawFunction(ctx, spriteX, spriteY, spriteRadius);
+        } else {
+             // Fallback to circle
+            ctx.beginPath();
+            ctx.arc(spriteX, spriteY, spriteRadius, 0, Math.PI * 2);
+            ctx.fillStyle = nokemon.sprite.color;
+            ctx.fill();
+        }
         
         // Draw Nokemon info
         ctx.font = '14px sans-serif';
@@ -2229,6 +2759,7 @@ function draw() {
     // Clear screen
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw the game state as normal
     if (currentState === GAME_STATE.TUTORIAL) {
         drawTutorial();
     } else if (currentState === GAME_STATE.STARTER_SELECTION) {
@@ -2405,6 +2936,12 @@ function draw() {
     } else if (currentState === GAME_STATE.MOVE_TUTOR) {
         drawMoveTutorScreen();
     }
+
+    // Draw transition overlay if transitioning
+    if (isTransitioning) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${transitionAlpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 }
 
 function gameLoop() {
@@ -2512,63 +3049,95 @@ function isNokemonFainted(nokemon) {
 }
 
 const EVOLUTIONS = {
-    'Leaflet': { level: 16, evolvesTo: 'Leafblade', stats: { hp: 10, attack: 5, defense: 5 } },
-    'Flarepup': { level: 16, evolvesTo: 'Flarehound', stats: { hp: 8, attack: 7, defense: 3 } },
-    'Aquafin': { level: 16, evolvesTo: 'Aquashark', stats: { hp: 9, attack: 4, defense: 6 } },
+    'Leaflet': { level: 10, evolvesTo: 'Leafblade', stats: { hp: 10, attack: 5, defense: 5 } },
+    'Flarepup': { level: 10, evolvesTo: 'Flarehound', stats: { hp: 8, attack: 7, defense: 3 } },
+    'Aquafin': { level: 10, evolvesTo: 'Aquashark', stats: { hp: 9, attack: 4, defense: 6 } },
     // New evolutions for wild Nokemon
-    'Scamper': { level: 20, evolvesTo: 'Scampede', stats: { hp: 15, attack: 10, defense: 5 } },
-    'Skywing': { level: 22, evolvesTo: 'Galeverex', stats: { hp: 10, attack: 12, defense: 8 } },
-    'Sproutling': { level: 18, evolvesTo: 'Grovyleaf', stats: { hp: 12, attack: 8, defense: 10 } },
-    'Flametail': { level: 24, evolvesTo: 'Pyroroar', stats: { hp: 10, attack: 15, defense: 5 } }
+    'Scamper': { level: 10, evolvesTo: 'Scampede', stats: { hp: 15, attack: 10, defense: 5 } },
+    'Skywing': { level: 10, evolvesTo: 'Galeverex', stats: { hp: 10, attack: 12, defense: 8 } },
+    'Sproutling': { level: 10, evolvesTo: 'Grovyleaf', stats: { hp: 12, attack: 8, defense: 10 } },
+    'Flametail': { level: 10, evolvesTo: 'Pyroroar', stats: { hp: 10, attack: 15, defense: 5 } }
     // Thunderwing does not evolve
 };
 
 const SPECIAL_MOVES_TUTOR = {
     'Leaflet': [
         { name: 'Giga Drain', power: 75, type: 'GRASS', accuracy: 1, description: 'Absorbs HP from foe.' },
-        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' }
+        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' },
+        { name: 'Dazzling Gleam', power: 80, type: 'FAIRY', accuracy: 1, description: 'A fairy-type attack.' },
+        { name: 'Sludge Bomb', power: 90, type: 'POISON', accuracy: 1, description: 'May poison the target.' }
     ],
     'Leafblade': [
         { name: 'Giga Drain', power: 75, type: 'GRASS', accuracy: 1, description: 'Absorbs HP from foe.' },
         { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' },
-        { name: 'Leaf Storm', power: 130, type: 'GRASS', accuracy: 0.9, description: 'Harshly lowers user Sp. Atk.' }
+        { name: 'Leaf Storm', power: 130, type: 'GRASS', accuracy: 0.9, description: 'Harshly lowers user Sp. Atk.' },
+        { name: 'Dazzling Gleam', power: 80, type: 'FAIRY', accuracy: 1, description: 'A fairy-type attack.' },
+        { name: 'Sludge Bomb', power: 90, type: 'POISON', accuracy: 1, description: 'May poison the target.' },
+        { name: 'Rock Slide', power: 75, type: 'ROCK', accuracy: 0.9, description: 'May cause flinching.' }
     ],
     'Flarepup': [
         { name: 'Flamethrower', power: 90, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
-        { name: 'Fire Blast', power: 110, type: 'FIRE', accuracy: 0.85, description: 'May burn foe.' }
+        { name: 'Fire Blast', power: 110, type: 'FIRE', accuracy: 0.85, description: 'May burn foe.' },
+        { name: 'Thunder Fang', power: 65, type: 'ELECTRIC', accuracy: 0.95, description: 'May paralyze foe.' },
+        { name: 'Crunch', power: 80, type: 'DARK', accuracy: 1, description: 'May lower Defense.' }
     ],
     'Flarehound': [
         { name: 'Flamethrower', power: 90, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
         { name: 'Fire Blast', power: 110, type: 'FIRE', accuracy: 0.85, description: 'May burn foe.' },
-        { name: 'Inferno', power: 100, type: 'FIRE', accuracy: 0.5, description: 'Always burns foe.' }
+        { name: 'Inferno', power: 100, type: 'FIRE', accuracy: 0.5, description: 'Always burns foe.' },
+        { name: 'Thunder Fang', power: 65, type: 'ELECTRIC', accuracy: 0.95, description: 'May paralyze foe.' },
+        { name: 'Crunch', power: 80, type: 'DARK', accuracy: 1, description: 'May lower Defense.' },
+        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' }
     ],
     'Aquafin': [
         { name: 'Surf', power: 90, type: 'WATER', accuracy: 1, description: 'Hits adjacent foes.' },
-        { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' }
+        { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' },
+        { name: 'Ice Beam', power: 90, type: 'ICE', accuracy: 1, description: 'May freeze foe.' },
+        { name: 'Signal Beam', power: 75, type: 'BUG', accuracy: 1, description: 'May confuse foe.' }
     ],
     'Aquashark': [
         { name: 'Surf', power: 90, type: 'WATER', accuracy: 1, description: 'Hits adjacent foes.' },
         { name: 'Hydro Pump', power: 110, type: 'WATER', accuracy: 0.8, description: 'Powerful water attack.' },
-        { name: 'Aqua Tail', power: 90, type: 'WATER', accuracy: 0.9, description: 'Powerful tail attack.' }
+        { name: 'Aqua Tail', power: 90, type: 'WATER', accuracy: 0.9, description: 'Powerful tail attack.' },
+        { name: 'Ice Beam', power: 90, type: 'ICE', accuracy: 1, description: 'May freeze foe.' },
+        { name: 'Signal Beam', power: 75, type: 'BUG', accuracy: 1, description: 'May confuse foe.' },
+        { name: 'Dark Pulse', power: 80, type: 'DARK', accuracy: 1, description: 'May cause flinching.' }
     ],
-    // Adding new Wild Nokemon special moves
     'Scamper': [
         { name: 'Body Slam', power: 85, type: 'NORMAL', accuracy: 1, description: 'May Paralyze.' },
-        { name: 'Dig', power: 80, type: 'GROUND', accuracy: 1, description: '2-turn move, avoids attacks.' }
+        { name: 'Dig', power: 80, type: 'GROUND', accuracy: 1, description: '2-turn move, avoids attacks.' },
+        { name: 'Shadow Ball', power: 80, type: 'GHOST', accuracy: 1, description: 'May lower Sp. Def.' },
+        { name: 'Thunder Wave', power: 0, type: 'ELECTRIC', accuracy: 0.9, description: 'Paralyzes foe.', effect: (user, target) => {
+            target.statusCondition = 'paralyzed';
+            target.statusDuration = -1;
+            return `${target.name} was paralyzed!`;
+        }}
     ],
     'Scampede': [
         { name: 'Body Slam', power: 85, type: 'NORMAL', accuracy: 1, description: 'May Paralyze.' },
         { name: 'Dig', power: 80, type: 'GROUND', accuracy: 1, description: '2-turn move, avoids attacks.' },
-        { name: 'Super Fang', power: 1, type: 'NORMAL', accuracy: 0.9, description: 'Cuts HP by half.' } // Power is placeholder for effect
+        { name: 'Super Fang', power: 1, type: 'NORMAL', accuracy: 0.9, description: 'Cuts HP by half.' },
+        { name: 'Shadow Ball', power: 80, type: 'GHOST', accuracy: 1, description: 'May lower Sp. Def.' },
+        { name: 'Thunder Wave', power: 0, type: 'ELECTRIC', accuracy: 0.9, description: 'Paralyzes foe.', effect: (user, target) => {
+            target.statusCondition = 'paralyzed';
+            target.statusDuration = -1;
+            return `${target.name} was paralyzed!`;
+        }},
+        { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' }
     ],
     'Skywing': [
         { name: 'Aerial Ace', power: 60, type: 'FLYING', accuracy: 1, description: 'Never misses.' },
-        { name: 'Steel Wing', power: 70, type: 'STEEL', accuracy: 0.9, description: 'May raise Defense.' }
+        { name: 'Steel Wing', power: 70, type: 'STEEL', accuracy: 0.9, description: 'May raise Defense.' },
+        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' },
+        { name: 'U-turn', power: 70, type: 'BUG', accuracy: 1, description: 'User switches out after attack.' }
     ],
     'Galeverex': [
         { name: 'Aerial Ace', power: 60, type: 'FLYING', accuracy: 1, description: 'Never misses.' },
         { name: 'Steel Wing', power: 70, type: 'STEEL', accuracy: 0.9, description: 'May raise Defense.' },
-        { name: 'Brave Bird', power: 120, type: 'FLYING', accuracy: 1, description: 'User takes recoil.' }
+        { name: 'Brave Bird', power: 120, type: 'FLYING', accuracy: 1, description: 'User takes recoil.' },
+        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' },
+        { name: 'U-turn', power: 70, type: 'BUG', accuracy: 1, description: 'User switches out after attack.' },
+        { name: 'Dark Pulse', power: 80, type: 'DARK', accuracy: 1, description: 'May cause flinching.' }
     ],
     'Sproutling': [
         { name: 'Magical Leaf', power: 60, type: 'GRASS', accuracy: 1, description: 'Never misses.' },
@@ -2576,7 +3145,9 @@ const SPECIAL_MOVES_TUTOR = {
             target.statusCondition = 'sleep';
             target.statusDuration = 3;
             return `${target.name} fell asleep!`;
-        } }
+        }},
+        { name: 'Dazzling Gleam', power: 80, type: 'FAIRY', accuracy: 1, description: 'A fairy-type attack.' },
+        { name: 'Sludge Bomb', power: 90, type: 'POISON', accuracy: 1, description: 'May poison the target.' }
     ],
     'Grovyleaf': [
         { name: 'Magical Leaf', power: 60, type: 'GRASS', accuracy: 1, description: 'Never misses.' },
@@ -2584,21 +3155,33 @@ const SPECIAL_MOVES_TUTOR = {
             target.statusCondition = 'sleep';
             target.statusDuration = 3;
             return `${target.name} fell asleep!`;
-        } }
+        }},
+        { name: 'Dazzling Gleam', power: 80, type: 'FAIRY', accuracy: 1, description: 'A fairy-type attack.' },
+        { name: 'Sludge Bomb', power: 90, type: 'POISON', accuracy: 1, description: 'May poison the target.' },
+        { name: 'Rock Slide', power: 75, type: 'ROCK', accuracy: 0.9, description: 'May cause flinching.' },
+        { name: 'Shadow Ball', power: 80, type: 'GHOST', accuracy: 1, description: 'May lower Sp. Def.' }
     ],
     'Flametail': [
         { name: 'Flame Wheel', power: 60, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
-        { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' }
+        { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' },
+        { name: 'Thunder Fang', power: 65, type: 'ELECTRIC', accuracy: 0.95, description: 'May paralyze foe.' },
+        { name: 'Crunch', power: 80, type: 'DARK', accuracy: 1, description: 'May lower Defense.' }
     ],
     'Pyroroar': [
         { name: 'Flame Wheel', power: 60, type: 'FIRE', accuracy: 1, description: 'May burn foe.' },
         { name: 'Iron Tail', power: 100, type: 'STEEL', accuracy: 0.75, description: 'May lower Defense.' },
-        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' }
+        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' },
+        { name: 'Thunder Fang', power: 65, type: 'ELECTRIC', accuracy: 0.95, description: 'May paralyze foe.' },
+        { name: 'Crunch', power: 80, type: 'DARK', accuracy: 1, description: 'May lower Defense.' },
+        { name: 'Solar Beam', power: 120, type: 'GRASS', accuracy: 1, description: '2-turn attack.' }
     ],
     'Thunderwing': [
-        { name: 'Thunderbolt', power: 90, type: 'ELECTRIC', accuracy: 1, description: 'May paralyze.' }, // Already has as wild, good for tutor too
+        { name: 'Thunderbolt', power: 90, type: 'ELECTRIC', accuracy: 1, description: 'May paralyze.' },
         { name: 'Roost', power: 0, type: 'FLYING', accuracy: 1, description: 'Heals user by 50% Max HP.', effect: (u,t) => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp / 2)); return `${u.name} roosted and restored HP!`; } },
-        { name: 'Zap Cannon', power: 120, type: 'ELECTRIC', accuracy: 0.5, description: 'Always paralyzes.' }
+        { name: 'Zap Cannon', power: 120, type: 'ELECTRIC', accuracy: 0.5, description: 'Always paralyzes.' },
+        { name: 'Heat Wave', power: 95, type: 'FIRE', accuracy: 0.9, description: 'May burn foe.' },
+        { name: 'Signal Beam', power: 75, type: 'BUG', accuracy: 1, description: 'May confuse foe.' },
+        { name: 'Dark Pulse', power: 80, type: 'DARK', accuracy: 1, description: 'May cause flinching.' }
     ]
 };
 
