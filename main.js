@@ -294,6 +294,98 @@ function drawThunderwing(ctx, x, y, radius) {
     ctx.stroke();
 }
 
+// Drawing function for Mysticor (Psychic Mythical)
+function drawMysticor(ctx, x, y, radius) {
+    // Body (ethereal swirl)
+    ctx.fillStyle = 'rgba(255, 105, 180, 0.7)'; // Bright Pink, semi-transparent
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 0.9, radius * 1.2, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner core
+    ctx.fillStyle = 'rgba(221, 160, 221, 0.9)'; // Plum
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Eyes (glowing)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.2, y - radius * 0.3, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.2, y - radius * 0.3, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    // Aura particles
+    for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = `rgba(255, 182, 193, ${Math.random() * 0.5 + 0.3})`;
+        ctx.beginPath();
+        ctx.arc(x + (Math.random() - 0.5) * radius * 2, y + (Math.random() - 0.5) * radius * 2, radius * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Drawing function for Shadower (Ghost Mythical)
+function drawShadower(ctx, x, y, radius) {
+    // Main shadow body
+    ctx.fillStyle = 'rgba(50, 50, 50, 0.8)'; // Dark Grey
+    ctx.beginPath();
+    ctx.moveTo(x, y - radius * 1.2);
+    ctx.bezierCurveTo(x - radius, y - radius * 0.5, x - radius * 0.8, y + radius, x, y + radius * 1.1);
+    ctx.bezierCurveTo(x + radius * 0.8, y + radius, x + radius, y - radius * 0.5, x, y - radius * 1.2);
+    ctx.fill();
+    // Eyes (menacing glow)
+    ctx.fillStyle = '#FF0000'; // Red
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.3, y - radius * 0.1, radius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + radius * 0.3, y - radius * 0.1, radius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Wisps
+    ctx.strokeStyle = 'rgba(80, 80, 80, 0.6)';
+    ctx.lineWidth = Math.max(1, radius * 0.15);
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.5, y + radius * 0.8);
+    ctx.quadraticCurveTo(x - radius, y + radius * 1.3, x - radius * 0.7, y + radius * 1.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.5, y + radius * 0.8);
+    ctx.quadraticCurveTo(x + radius, y + radius * 1.3, x + radius * 0.7, y + radius * 1.5);
+    ctx.stroke();
+}
+
+// Drawing function for Geodrake (Fire/Earth Legendary)
+function drawGeodrake(ctx, x, y, radius) {
+    // Body (rocky plates)
+    ctx.fillStyle = '#8B4513'; // SaddleBrown
+    ctx.beginPath();
+    ctx.rect(x - radius * 0.8, y - radius * 0.5, radius * 1.6, radius);
+    ctx.fill();
+    // Head
+    ctx.fillStyle = '#A0522D'; // Sienna
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.7, y - radius * 0.7, radius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Molten Core/Eyes
+    ctx.fillStyle = '#FF4500'; // OrangeRed
+    ctx.beginPath();
+    ctx.arc(x - radius * 0.8, y - radius * 0.75, radius * 0.1, 0, Math.PI * 2); // Eye
+    ctx.fill();
+    // Back Spikes (fiery)
+    ctx.fillStyle = '#FF8C00'; // DarkOrange
+    ctx.beginPath();
+    ctx.moveTo(x, y - radius * 0.5);
+    ctx.lineTo(x + radius * 0.3, y - radius * 0.8);
+    ctx.lineTo(x + radius * 0.6, y - radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.5, y - radius * 0.5);
+    ctx.lineTo(x + radius * 0.8, y - radius * 0.8);
+    ctx.lineTo(x + radius * 1.1, y - radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+}
+
 // Add Animation System Variables & Functions (Moved Here)
 let activeAnimations = [];
 const ANIMATION_TYPES = {
@@ -704,7 +796,8 @@ const player = {
         pants: '#2B4C7E',   // Dark blue pants
         shoes: '#1A1A1A',   // Black shoes
         backpack: '#8B4513' // Brown backpack
-    }
+    },
+    currency: 1000 // Starting currency
 };
 
 // Move types and effects
@@ -1001,6 +1094,58 @@ const legendaryNokemon = {
         color: '#F8D030',
         radius: 25,
         drawFunction: drawThunderwing
+    }
+};
+
+// Market Exclusive Nokemon Definitions
+const marketExclusiveNokemon = {
+    Mysticor: {
+        name: 'Mysticor',
+        level: 25,
+        hp: 120,
+        maxHp: 120,
+        attack: 50, // Special attacker
+        defense: 70,
+        type: 'PSYCHIC',
+        moves: [
+            { name: 'Psybeam', power: 150, type: 'PSYCHIC', accuracy: 0.9, description: 'May confuse.' },
+            { name: 'Moonblast', power: 180, type: 'PSYCHIC', accuracy: 0.95, description: 'Fairy-like blast (Psychic type for now)' }, // Using PSYCHIC as FAIRY type doesn't exist
+            { name: 'Calm Mind', power: 0, type: 'PSYCHIC', accuracy: 1, description: 'Boosts Sp. Atk & Sp. Def', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.3); u.defense = Math.floor(u.defense * 1.3); return `${u.name} became calmer!`; } },
+            { name: 'Recover', power: 0, type: 'NORMAL', accuracy: 1, description: 'Restores 50% HP', effect: (u,t) => { u.hp = Math.min(u.maxHp, u.hp + Math.floor(u.maxHp/2)); return `${u.name} recovered HP!`; } }
+        ],
+        sprite: { color: '#FF69B4', radius: 22, drawFunction: drawMysticor }
+    },
+    Shadower: {
+        name: 'Shadower',
+        level: 25,
+        hp: 100,
+        maxHp: 100,
+        attack: 80,
+        defense: 60,
+        type: 'GHOST',
+        moves: [
+            { name: 'Shadow Claw', power: 160, type: 'GHOST', accuracy: 0.95, description: 'High crit. chance.' },
+            { name: 'Dark Pulse', power: 170, type: 'GHOST', accuracy: 0.9, description: 'Dark-like pulse (Ghost type)' }, // Using GHOST as DARK type doesn't exist
+            { name: 'Nasty Plot', power: 0, type: 'GHOST', accuracy: 1, description: 'Sharply boosts Sp. Atk', effect: (u,t) => { u.attack = Math.floor(u.attack * 1.5); return `${u.name} plotted something nasty!`; } },
+            { name: 'Will-O-Wisp', power: 0, type: 'FIRE', accuracy: 0.85, description: 'Burns the foe.', effect: (u,t) => { return `${t.name} was burned!`; } }
+        ],
+        sprite: { color: '#4A4A4A', radius: 20, drawFunction: drawShadower }
+    },
+    Geodrake: {
+        name: 'Geodrake',
+        level: 20,
+        hp: 150,
+        maxHp: 150,
+        attack: 70,
+        defense: 90,
+        type: 'FIRE', // Representing earth/magma
+        moves: [
+            { name: 'Earth Power', power: 170, type: 'FIRE', accuracy: 0.9, description: 'Ground-shaking power (Fire type)' }, // Using FIRE as GROUND type doesn't exist
+            { name: 'Rock Tomb', power: 140, type: 'NORMAL', accuracy: 0.95, description: 'Traps with rocks (Normal type)' }, // Using NORMAL as ROCK type doesn't exist
+            { name: 'Iron Defense', power: 0, type: 'NORMAL', accuracy: 1, description: 'Sharply boosts Defense', effect: (u,t) => { u.defense = Math.floor(u.defense * 1.5); return `${u.name}'s defense hardened!`; } },
+            { name: 'Flamethrower', power: 160, type: 'FIRE', accuracy: 0.9, description: 'Standard fire attack' }
+        ],
+        sprite: { color: '#A0522D', radius: 24, drawFunction: drawGeodrake }
     }
 };
 
@@ -1420,7 +1565,8 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    if (currentState === GAME_STATE.NOKEMON_SHOP) {
+    // Consolidated and updated NOKEMON_SHOP logic
+    else if (currentState === GAME_STATE.NOKEMON_SHOP) {
         if (e.key === 'ArrowUp') {
             selectedShopItemIndex = (selectedShopItemIndex - 1 + nokemonForSale.length) % nokemonForSale.length;
             audioSystem.playSound('menu');
@@ -1430,17 +1576,28 @@ window.addEventListener('keydown', (e) => {
         } else if (e.key === 'Enter') {
             const selectedNokemonToBuy = { ...nokemonForSale[selectedShopItemIndex] }; // Create a fresh copy
             const partySize = (startingNokemon ? 1 : 0) + playerNokemon.length;
-            if (partySize < 6) { // Max 6 Nokemon in party
-                playerNokemon.push(selectedNokemonToBuy);
-                battleMessage = `${selectedNokemonToBuy.name} joined your team!`;
-                audioSystem.playSound('catch'); // Re-use catch sound
+
+            if (player.currency >= selectedNokemonToBuy.price) {
+                if (partySize < 6) { // Max 6 Nokemon in party
+                    player.currency -= selectedNokemonToBuy.price;
+                    playerNokemon.push(selectedNokemonToBuy);
+                    battleMessage = `${selectedNokemonToBuy.name} joined your team!`;
+                    audioSystem.playSound('catch'); // Re-use catch sound
+                    battleMessageTimer = 120;
+                    currentState = GAME_STATE.EXPLORING; // Exit shop
+                    currentArea = 'town'; // Stay in town
+                } else {
+                    battleMessage = 'Your party is full!';
+                    audioSystem.playSound('menu'); // Or some error sound
+                    battleMessageTimer = 120;
+                    // Don't exit shop if party is full, allow another selection or exit with Escape
+                }
             } else {
-                battleMessage = 'Your party is full!';
-                audioSystem.playSound('menu'); // Or some error sound
+                battleMessage = "Not enough coins!";
+                audioSystem.playSound('menu'); // Or some error/declined sound
+                battleMessageTimer = 120;
+                // Don't exit shop if not enough coins, allow another selection or exit with Escape
             }
-            battleMessageTimer = 120;
-            currentState = GAME_STATE.EXPLORING; // Exit shop
-            currentArea = 'town'; // Stay in town
         } else if (e.key === 'Escape') {
             currentState = GAME_STATE.EXPLORING;
             currentArea = 'town';
@@ -1619,7 +1776,7 @@ function update() {
     }
 
     // Only try encounters when exploring and not in cooldown
-    if (currentState === GAME_STATE.EXPLORING && battleCooldown === 0) {
+    if (currentState === GAME_STATE.EXPLORING && battleCooldown === 0 && currentArea !== 'town') { // Prevent encounters in town
         tryEncounter();
     }
 
@@ -1797,7 +1954,7 @@ const MOVE_LEARNING = {
             // For simplicity here, if it has an effect function, it's a status move primarily.
             // Let's adjust Hurricane to be a status move for this example, or we need to refactor how moves work.
             // --- REVISITING Hurricane: Original design of game implies effect moves have power 0. --- 
-            // --- Hurricane is a damage dealing move that CAN confuse. This needs a more complex move execution logic. --- 
+            // --- Hurricane is a damage dealing move that CAN confuse. This needs a more complex move execution logic. ---
             // --- For NOW, to make it work as a confusion-inducer, I'll treat its effect: part as primary. ---
             // --- This means Hurricane WON'T do damage if this effect is kept like this. We should address this later. ---
             if (Math.random() < 0.3) { // Adding a 30% chance to confuse for Hurricane
@@ -1851,6 +2008,8 @@ function levelUp(nokemon) {
     nokemon.hp = nokemon.maxHp;
     nokemon.attack += 2;
     nokemon.defense += 2;
+    let evolutionHappened = false;
+    let learnedMoveMessage = null;
     
     // Check for new moves to learn
     const learnableMoves = MOVE_LEARNING[nokemon.name] || [];
@@ -1868,17 +2027,34 @@ function levelUp(nokemon) {
             // Replace the last move if we already have 4 moves
             nokemon.moves[3] = newMove;
         }
-        battleMessage = `${nokemon.name} learned ${newMove.name}!`;
-        battleMessageTimer = 120;
+        // battleMessage = `${nokemon.name} learned ${newMove.name}!`;
+        // battleMessageTimer = 120;
+        learnedMoveMessage = `${nokemon.name} learned ${newMove.name}!`;
     }
     
     // Check for evolution
     if (checkAndEvolve(nokemon)) {
-        battleMessage = evolutionMessage;
-        battleMessageTimer = 120;
+        // evolutionMessage is set by checkAndEvolve
+        // battleMessage = evolutionMessage;
+        // battleMessageTimer = 120;
+        evolutionHappened = true; // Flag that evolution occurred
     }
     
     audioSystem.playSound('levelUp');
+
+    // Construct and return the level up message
+    let finalMessage = `${nokemon.name} grew to level ${nokemon.level}!`;
+    if (evolutionHappened) {
+        finalMessage = evolutionMessage; // Evolution message takes priority
+    }
+    if (learnedMoveMessage) {
+        if (evolutionHappened) { // If evolution also happened, append move learning to its message
+            finalMessage += ` And learned ${newMoves[0].move.name}!`;
+        } else { // Otherwise, it's the primary part of this event
+            finalMessage = learnedMoveMessage;
+        }
+    }
+    return finalMessage; // Return the composite message
 }
 
 function useMove(moveIndex) {
@@ -1954,11 +2130,18 @@ function useMove(moveIndex) {
             if (currentWildNokemon.hp <= 0) {
                 console.log('Wild Nokemon fainted');
                 setTimeout(() => {
-                    battleMessage = 'Wild Nokemon fainted!';
+                    battleMessage = `Wild ${currentWildNokemon.name} fainted!`;
                     battleMessageTimer = 60;
+                    // Player earns money for defeating the Nokemon
+                    const moneyEarned = currentWildNokemon.level * 10; // Example: 10 coins per level
+                    player.currency += moneyEarned;
+                    
                     setTimeout(() => {
+                        battleMessage = `Wild ${currentWildNokemon.name} fainted! You found ${moneyEarned} coins!`;
+                        battleMessageTimer = 120; // Longer time for combined message
+
                         // Level up after winning
-                        const levelUpMessage = levelUp(battleNokemon);
+                        const levelUpMessage = levelUp(battleNokemon); // levelUp might also set battleMessage
                         // Update the original Nokemon's stats
                         const allNokemon = [startingNokemon, ...playerNokemon];
                         const originalNokemon = allNokemon[selectedNokemonIndex];
@@ -1968,8 +2151,17 @@ function useMove(moveIndex) {
                         originalNokemon.attack = battleNokemon.attack;
                         originalNokemon.defense = battleNokemon.defense;
                         
-                        battleMessage = levelUpMessage;
-                        battleMessageTimer = 120; // Longer message time for level up
+                        // If levelUp function set a message, append coins message, or prioritize level up message
+                        // For simplicity, we'll let the levelUp message overwrite if it occurs, 
+                        // or the fainted + coins message will show. 
+                        // A more robust system would queue messages.
+                        if (levelUpMessage) { // Assuming levelUp returns a message string or null
+                            battleMessage = levelUpMessage + ` You also found ${moneyEarned} coins!`;
+                        } else {
+                             battleMessage = `Wild ${currentWildNokemon.name} fainted! You found ${moneyEarned} coins!`;
+                        }
+                        battleMessageTimer = 180; // Even longer for potentially combined messages
+
                         setTimeout(() => {
                             endBattle();
                         }, 2000);
@@ -2953,6 +3145,9 @@ function draw() {
         ctx.fillText(`Area: ${currentArea.charAt(0).toUpperCase() + currentArea.slice(1)}`, 20, 40);
         const teamLevel = calculateTeamLevel();
         ctx.fillText(`Team Level: ${teamLevel}/10`, 20, 60);
+        ctx.fillStyle = '#FFD700'; // Gold color
+        ctx.fillText(`Coins: ${player.currency}`, 20, 80); // Display currency on main HUD
+
         if (startingNokemon) {
              const isFainted = isNokemonFainted(startingNokemon);
              ctx.fillStyle = isFainted ? '#666666' : '#000';
@@ -2969,8 +3164,16 @@ function draw() {
         }
         // Draw Battle/Game Message (if active)
         if (battleMessage && battleMessageTimer > 0 && currentState !== GAME_STATE.NOKEMON_SHOP) { 
-            ctx.font = '20px sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center';
+            ctx.font = '20px sans-serif'; 
+            ctx.fillStyle = '#000'; 
+            ctx.textAlign = 'center';
             ctx.fillText(battleMessage, canvas.width / 2, 70);
+        } else if (battleMessage && battleMessageTimer > 0 && currentState === GAME_STATE.NOKEMON_SHOP) {
+            // Special handling for shop messages (e.g., "Not enough coins!")
+            ctx.font = '20px sans-serif'; 
+            ctx.fillStyle = '#FFFFFF'; // White text for better visibility on dark shop background
+            ctx.textAlign = 'center';
+            ctx.fillText(battleMessage, canvas.width / 2, canvas.height - 40); // Position message at bottom for shop
         }
         // Audio Status
         if (!audioInitialized) {
@@ -3442,41 +3645,20 @@ const nokeMartBuilding = {
 const nokemonForSale = [
     // Using copies of existing wild Nokemon templates for simplicity
     // Adjust levels or stats as desired for shop versions
-    { ...wildNokemonTemplates.common.find(n => n.name === 'Scamper'), level: 5, price: 0 }, // Price 0 for now
-    { ...wildNokemonTemplates.common.find(n => n.name === 'Skywing'), level: 5, price: 0 },
-    { ...wildNokemonTemplates.uncommon.find(n => n.name === 'Sproutling'), level: 7, price: 0 }
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Scamper'), level: 5, price: 250 }, 
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Skywing'), level: 5, price: 300 },
+    { ...wildNokemonTemplates.uncommon.find(n => n.name === 'Sproutling'), level: 7, price: 750 },
+    // Rare, Legendary, and Mythical Nokemon for the shop
+    { ...wildNokemonTemplates.rare.find(n => n.name === 'Flametail'), level: 10, price: 2000 }, // Existing Rare
+    { ...legendaryNokemon, level: 18, price: 10000 }, // Existing Legendary (Thunderwing)
+    { ...marketExclusiveNokemon.Geodrake, price: 15000 }, // New Legendary
+    { ...marketExclusiveNokemon.Mysticor, price: 25000 }, // New Mythical
+    { ...marketExclusiveNokemon.Shadower, price: 25000 }  // New Mythical
 ];
 
 // Add keydown handling for NOKEMON_SHOP state
 window.addEventListener('keydown', (e) => {
-    // ... (existing keydown logic for other states) ...
-    if (currentState === GAME_STATE.NOKEMON_SHOP) {
-        if (e.key === 'ArrowUp') {
-            selectedShopItemIndex = (selectedShopItemIndex - 1 + nokemonForSale.length) % nokemonForSale.length;
-            audioSystem.playSound('menu');
-        } else if (e.key === 'ArrowDown') {
-            selectedShopItemIndex = (selectedShopItemIndex + 1) % nokemonForSale.length;
-            audioSystem.playSound('menu');
-        } else if (e.key === 'Enter') {
-            const selectedNokemonToBuy = { ...nokemonForSale[selectedShopItemIndex] }; // Create a fresh copy
-            const partySize = (startingNokemon ? 1 : 0) + playerNokemon.length;
-            if (partySize < 6) { // Max 6 Nokemon in party
-                playerNokemon.push(selectedNokemonToBuy);
-                battleMessage = `${selectedNokemonToBuy.name} joined your team!`;
-                audioSystem.playSound('catch'); // Re-use catch sound
-            } else {
-                battleMessage = 'Your party is full!';
-                audioSystem.playSound('menu'); // Or some error sound
-            }
-            battleMessageTimer = 120;
-            currentState = GAME_STATE.EXPLORING; // Exit shop
-            currentArea = 'town'; // Stay in town
-        } else if (e.key === 'Escape') {
-            currentState = GAME_STATE.EXPLORING;
-            currentArea = 'town';
-            audioSystem.playSound('menu');
-        }
-    }
+    // ... (rest of the keydown logic for other states) ...
 });
 
 // Add drawNokemonShopScreen function
@@ -3488,6 +3670,12 @@ function drawNokemonShopScreen() {
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
     ctx.fillText('Nokemon Mart - For Sale', canvas.width / 2, 60);
+
+    // Display Player Currency
+    ctx.font = '20px sans-serif';
+    ctx.fillStyle = '#FFD700'; // Gold color for currency
+    ctx.textAlign = 'right';
+    ctx.fillText(`Coins: ${player.currency}`, canvas.width - 30, 40);
 
     const itemBoxYStart = 100;
     const itemBoxHeight = 60;
@@ -3518,7 +3706,8 @@ function drawNokemonShopScreen() {
         ctx.fillText(`${item.name} (Lv. ${item.level})`, canvas.width / 2 - 180, y + itemBoxHeight / 2 - 5);
         ctx.fillStyle = MOVE_TYPES[item.type] ? MOVE_TYPES[item.type].color : '#FFFFFF';
         ctx.fillText(`Type: ${item.type}`, canvas.width / 2 - 180, y + itemBoxHeight / 2 + 15);
-        // Price can be added here later: e.g., ctx.fillText(`Price: ${item.price} Coins`, canvas.width / 2 + 100, y + itemBoxHeight / 2 );
+        ctx.fillStyle = '#FFD700'; // Gold color for price
+        ctx.fillText(`Price: ${item.price} Coins`, canvas.width / 2 + 50, y + itemBoxHeight / 2 + 0); // Display price
     });
 
     ctx.font = '16px sans-serif';
