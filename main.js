@@ -298,18 +298,19 @@ function drawThunderwing(ctx, x, y, radius) {
 let activeAnimations = [];
 const ANIMATION_TYPES = {
     PROJECTILE: 'projectile',
-    SHAKE: 'shake'
+    SHAKE: 'shake',
+    DODGE: 'dodge' // New
 };
 
 function startAnimation(type, attackerSprite, defenderSprite, options = {}) {
-    const duration = options.duration || 30;
+    const duration = options.duration || 30; 
     const animation = {
         type: type,
         startX: attackerSprite.x,
         startY: attackerSprite.y,
-        endX: defenderSprite.x,
+        endX: defenderSprite.x, // Default end for projectiles
         endY: defenderSprite.y,
-        targetSprite: defenderSprite,
+        targetSprite: defenderSprite, // Default target for shake/effects
         progress: 0,
         duration: duration,
         color: options.color || '#FFFFFF',
@@ -318,6 +319,18 @@ function startAnimation(type, attackerSprite, defenderSprite, options = {}) {
         frequency: options.frequency || 10,
         id: Date.now() + Math.random()
     };
+
+    if (type === ANIMATION_TYPES.DODGE) {
+        animation.dodgeDirection = Math.random() < 0.5 ? -1 : 1; // -1 for left/up, 1 for right/down
+        animation.dodgeDistance = options.distance || 20;       // How far to move
+        animation.targetSprite = defenderSprite; // Explicitly set for dodge
+        animation.startX = defenderSprite.x;     // For dodge, startX/Y is the original pos of the dodger
+        animation.startY = defenderSprite.y;
+        // Projectile-specific endX/endY are not relevant for dodge type itself
+    }
+    // For non-dodge types, attackerSprite is the origin for startX/startY
+    // and defenderSprite is the target for endX/endY (for projectiles) or the subject of shake.
+
     activeAnimations.push(animation);
     console.log(`Starting animation: ${type}`, animation);
 }
@@ -578,7 +591,9 @@ const GAME_STATE = {
     PARTY_VIEW: 'party_view',
     MOVE_LEARNING: 'move_learning',  // New state
     EVOLUTION: 'evolution',  // New state
-    MOVE_TUTOR: 'move_tutor' // New state for Move Tutor
+    MOVE_TUTOR: 'move_tutor', // New state for Move Tutor
+    TOWN: 'town', // New area state
+    NOKEMON_SHOP: 'nokemon_shop' // New shop state
 };
 
 // Add transition animation variables
@@ -1404,6 +1419,34 @@ window.addEventListener('keydown', (e) => {
             audioSystem.playSound('menu');
         }
     }
+
+    if (currentState === GAME_STATE.NOKEMON_SHOP) {
+        if (e.key === 'ArrowUp') {
+            selectedShopItemIndex = (selectedShopItemIndex - 1 + nokemonForSale.length) % nokemonForSale.length;
+            audioSystem.playSound('menu');
+        } else if (e.key === 'ArrowDown') {
+            selectedShopItemIndex = (selectedShopItemIndex + 1) % nokemonForSale.length;
+            audioSystem.playSound('menu');
+        } else if (e.key === 'Enter') {
+            const selectedNokemonToBuy = { ...nokemonForSale[selectedShopItemIndex] }; // Create a fresh copy
+            const partySize = (startingNokemon ? 1 : 0) + playerNokemon.length;
+            if (partySize < 6) { // Max 6 Nokemon in party
+                playerNokemon.push(selectedNokemonToBuy);
+                battleMessage = `${selectedNokemonToBuy.name} joined your team!`;
+                audioSystem.playSound('catch'); // Re-use catch sound
+            } else {
+                battleMessage = 'Your party is full!';
+                audioSystem.playSound('menu'); // Or some error sound
+            }
+            battleMessageTimer = 120;
+            currentState = GAME_STATE.EXPLORING; // Exit shop
+            currentArea = 'town'; // Stay in town
+        } else if (e.key === 'Escape') {
+            currentState = GAME_STATE.EXPLORING;
+            currentArea = 'town';
+            audioSystem.playSound('menu');
+        }
+    }
 });
 
 window.addEventListener('keyup', (e) => {
@@ -1495,30 +1538,33 @@ function update() {
         }
     }
 
-    // Handle area transition
+    // Handle area transition (modified)
     if (keys['t'] && canAccessNewArea && !isTransitioning) {
         isTransitioning = true;
-        transitionDirection = 1; // Start fading out
+        transitionDirection = 1;
         transitionAlpha = 0;
         audioSystem.playSound('menu');
+        // The actual area switch happens when transitionAlpha >= 1
     }
 
-    // Add transition update logic in the update function
     if (isTransitioning) {
         transitionAlpha += transitionDirection * (1 / transitionDuration);
-        
-        if (transitionAlpha >= 1) {
-            // Switch areas when fully faded out
-            currentArea = currentArea === 'starter' ? 'advanced' : 'starter';
-            // Reset player position when changing areas
+        if (transitionAlpha >= 1 && transitionDirection === 1) { // Faded out
+            if (currentArea === 'starter') {
+                currentArea = 'advanced';
+            } else if (currentArea === 'advanced') {
+                currentArea = 'town'; // Advanced -> Town
+            } else if (currentArea === 'town') {
+                currentArea = 'starter'; // Town -> Starter (looping back)
+            }
             player.x = canvas.width / 2 - 16;
             player.y = canvas.height / 2 - 16;
             transitionDirection = -1; // Start fading in
-        } else if (transitionAlpha <= 0 && transitionDirection === -1) {
-            // End transition when fully faded in
-            isTransitioning = false;
-            battleMessage = `Welcome to the ${currentArea === 'advanced' ? 'Advanced' : 'Starter'} Area!`;
+            battleMessage = `Welcome to the ${currentArea.charAt(0).toUpperCase() + currentArea.slice(1)} Area!`;
             battleMessageTimer = 120;
+        } else if (transitionAlpha <= 0 && transitionDirection === -1) { // Faded in
+            isTransitioning = false;
+            // Message is set when area changes
         }
     }
 
@@ -1552,6 +1598,22 @@ function update() {
                 selectedNokemonIndex = 0; // Reset selection for Nokemon choice
                 selectedMoveIndex = 0; // Reset selection for move choice
                 audioSystem.playSound('menu'); 
+            }
+        }
+
+        // Handle NokeMart entry
+        if (currentArea === 'town') {
+            const inNokeMartZone = 
+                player.x + player.width > nokeMartBuilding.x &&
+                player.x < nokeMartBuilding.x + nokeMartBuilding.width &&
+                player.y + player.height > nokeMartBuilding.y &&
+                player.y < nokeMartBuilding.y + nokeMartBuilding.height;
+            
+            if (inNokeMartZone && keys['s']) { // 'S' for Shop
+                currentState = GAME_STATE.NOKEMON_SHOP;
+                selectedShopItemIndex = 0; // Reset selection
+                audioSystem.playSound('menu');
+                keys['s'] = false; // Consume key press
             }
         }
     }
@@ -1833,27 +1895,35 @@ function useMove(moveIndex) {
     
     console.log('Attempting to use move:', move.name);
     
-    // Check accuracy first
-    if (Math.random() > move.accuracy) {
+    if (Math.random() > move.accuracy) { // Move missed
         battleMessage = `${battleNokemon.name}'s ${move.name} missed!`;
-        battleMessageTimer = 60;
+        battleMessageTimer = 60; 
+
+        if (move.animation && move.animation.type === ANIMATION_TYPES.PROJECTILE) {
+            // Fire projectile towards original target spot even on miss
+            startAnimation(move.animation.type, battleNokemon.sprite, currentWildNokemon.sprite, move.animation);
+        }
+        // Note: Shake animations for the attacker (if any) wouldn't play on a miss.
+        // If the missed move was a shake-inducing hit, it simply doesn't connect.
+
+        // Trigger dodge animation on the defender
+        startAnimation(ANIMATION_TYPES.DODGE, battleNokemon.sprite, currentWildNokemon.sprite, { duration: 25, distance: 20 });
+
         isPlayerTurn = false;
-        console.log('Move missed');
-        setTimeout(wildNokemonTurn, 1000);
+        console.log('Move missed, opponent dodged');
+        setTimeout(wildNokemonTurn, 700); // Delay for dodge and projectile to be seen
         return;
     }
 
-    // Play attack sound (keep this)
+    // Play attack sound (for hits)
     audioSystem.playSound('attack');
 
-    // Start animation if defined for the move
+    // Start animation if defined for the move (for hits)
     if (move.animation) {
         startAnimation(move.animation.type, battleNokemon.sprite, currentWildNokemon.sprite, move.animation);
     }
 
-    // Delay damage calculation/effect to allow animation to play partly
-    const animationDelay = move.animation?.duration ? move.animation.duration * 15 : 100; // Delay based on animation duration (ms) or default
-
+    const animationDelay = move.animation?.duration ? move.animation.duration * 15 : 100;
     setTimeout(() => {
         // Handle status moves
         if (move.power === 0 && move.effect) {
@@ -1929,25 +1999,31 @@ function wildNokemonTurn() {
     
     console.log('Wild Nokemon using move:', wildMove.name);
     
-    if (Math.random() > wildMove.accuracy) {
+    if (Math.random() > wildMove.accuracy) { // Move missed
         battleMessage = `Wild ${currentWildNokemon.name}'s ${wildMove.name} missed!`;
         battleMessageTimer = 60;
+
+        if (wildMove.animation && wildMove.animation.type === ANIMATION_TYPES.PROJECTILE) {
+            startAnimation(wildMove.animation.type, currentWildNokemon.sprite, battleNokemon.sprite, wildMove.animation);
+        }
+
+        startAnimation(ANIMATION_TYPES.DODGE, currentWildNokemon.sprite, battleNokemon.sprite, { duration: 25, distance: 20 });
+
         isPlayerTurn = true;
-        console.log('Wild Nokemon move missed');
+        console.log('Wild Nokemon move missed, player dodged');
+        // Turn passes back to player, no specific delay needed here beyond normal flow
         return;
     }
 
-    // Play attack sound
+    // Play attack sound (for hits)
     audioSystem.playSound('attack');
 
-    // Start animation if defined
+    // Start animation if defined (for hits)
     if (wildMove.animation) {
         startAnimation(wildMove.animation.type, currentWildNokemon.sprite, battleNokemon.sprite, wildMove.animation);
     }
 
-    // Delay damage calculation/effect
     const animationDelay = wildMove.animation?.duration ? wildMove.animation.duration * 15 : 100;
-
     setTimeout(() => {
         if (wildMove.power === 0 && wildMove.effect) {
             battleMessage = wildMove.effect(currentWildNokemon, battleNokemon);
@@ -2081,6 +2157,8 @@ function drawBattleScreen() {
     // Calculate shake offsets
     let playerShakeX = 0, playerShakeY = 0;
     let wildShakeX = 0, wildShakeY = 0;
+    let playerDodgeXOffset = 0, playerDodgeYOffset = 0; 
+    let wildDodgeXOffset = 0, wildDodgeYOffset = 0;   
 
     activeAnimations.forEach(anim => {
         if (anim.type === ANIMATION_TYPES.SHAKE) {
@@ -2096,12 +2174,37 @@ function drawBattleScreen() {
                 wildShakeX = shakeOffset;
                 wildShakeY = shakeOffset;
             }
+        } else if (anim.type === ANIMATION_TYPES.DODGE) {
+            const progress = Number(anim.progress) || 0;
+            const duration = Number(anim.duration) || 1; // Prevent division by zero if duration is bad
+            const dodgeDistance = Number(anim.dodgeDistance) || 0;
+            const dodgeDirection = Number(anim.dodgeDirection) || 1;
+
+            const dodgeProgress = Math.max(0, Math.min(1, progress / duration)); // Ensure 0-1 range
+
+            let currentDodgeShiftMagnitude = 0;
+            if (dodgeProgress <= 0.5) { // Move out for first half
+                currentDodgeShiftMagnitude = dodgeDistance * (dodgeProgress * 2);
+            } else { // Move back for second half
+                currentDodgeShiftMagnitude = dodgeDistance * ((1 - dodgeProgress) * 2);
+            }
+            currentDodgeShiftMagnitude = Math.max(0, currentDodgeShiftMagnitude); // Ensure non-negative magnitude
+
+            const calculatedOffset = currentDodgeShiftMagnitude * dodgeDirection;
+
+            if (anim.targetSprite === battleNokemon.sprite) {
+                playerDodgeXOffset = calculatedOffset;
+                // playerDodgeYOffset remains 0 for horizontal dodge
+            } else if (anim.targetSprite === currentWildNokemon.sprite) {
+                wildDodgeXOffset = calculatedOffset;
+                // wildDodgeYOffset remains 0 for horizontal dodge
+            }
         }
     });
 
     // Draw player's Nokemon with potential shake offset
-    const playerDrawX = battleNokemon.sprite.x + playerShakeX;
-    const playerDrawY = battleNokemon.sprite.y + playerShakeY;
+    const playerDrawX = battleNokemon.sprite.x + playerShakeX + playerDodgeXOffset;
+    const playerDrawY = battleNokemon.sprite.y + playerShakeY + playerDodgeYOffset;
     if (battleNokemon.sprite.drawFunction) {
         battleNokemon.sprite.drawFunction(ctx, playerDrawX, playerDrawY, battleNokemon.sprite.radius);
     } else {
@@ -2113,8 +2216,8 @@ function drawBattleScreen() {
     }
 
     // Draw wild Nokemon with potential shake offset
-    const wildDrawX = currentWildNokemon.sprite.x + wildShakeX;
-    const wildDrawY = currentWildNokemon.sprite.y + wildShakeY;
+    const wildDrawX = currentWildNokemon.sprite.x + wildShakeX + wildDodgeXOffset;
+    const wildDrawY = currentWildNokemon.sprite.y + wildShakeY + wildDodgeYOffset;
     if (currentWildNokemon.sprite.drawFunction) {
         currentWildNokemon.sprite.drawFunction(ctx, wildDrawX, wildDrawY, currentWildNokemon.sprite.radius);
     } else {
@@ -2755,11 +2858,10 @@ function drawLevelUpExample(x, y) {
     ctx.fillText('Defense: 37', x, y + 75);
 }
 
+// Reverting draw function to the state before the grass fix attempt
 function draw() {
-    // Clear screen
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw the game state as normal
     if (currentState === GAME_STATE.TUTORIAL) {
         drawTutorial();
     } else if (currentState === GAME_STATE.STARTER_SELECTION) {
@@ -2767,7 +2869,7 @@ function draw() {
     } else if (currentState === GAME_STATE.GAME_OVER) {
         drawGameOver();
     } else if (currentState === GAME_STATE.HEALING) {
-        // Draw healing screen
+        // Original Healing Screen Draw
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.font = '32px sans-serif';
@@ -2776,88 +2878,34 @@ function draw() {
         ctx.fillText('Healing your Nokemon...', canvas.width / 2, canvas.height / 2);
     } else if (currentState === GAME_STATE.PARTY_VIEW) {
         drawPartyView();
+    } else if (currentState === GAME_STATE.NOKEMON_SHOP) { // Shop state
+        drawNokemonShopScreen();
     } else {
-        // Draw area-specific elements
+         // Covers EXPLORING, BATTLE, MOVE_SELECTION, NOKEMON_SELECTION, MOVE_TUTOR, TOWN
+        // Draw area-specific elements (original structure attempt)
         if (currentArea === 'advanced') {
-            // Draw Healing Center with new graphics
-            const hcX = healingCenter.x;
-            const hcY = healingCenter.y;
-            const hcWidth = healingCenter.width;
-            const hcHeight = healingCenter.height;
-
-            // Walls
-            ctx.fillStyle = healingCenter.wallColor;
-            ctx.fillRect(hcX, hcY, hcWidth, hcHeight);
-
-            // Roof
-            ctx.fillStyle = healingCenter.roofColor;
-            ctx.beginPath();
-            ctx.moveTo(hcX - 10, hcY);
-            ctx.lineTo(hcX + hcWidth + 10, hcY);
-            ctx.lineTo(hcX + hcWidth / 2, hcY - 30);
-            ctx.closePath();
-            ctx.fill();
-
-            // Door
-            ctx.fillStyle = healingCenter.doorColor;
-            ctx.fillRect(hcX + hcWidth / 2 - 15, hcY + hcHeight - 30, 30, 30);
-
-            // Window
-            ctx.fillStyle = healingCenter.windowColor;
-            ctx.fillRect(hcX + 15, hcY + 15, 25, 25);
-            ctx.fillStyle = '#000'; // Window Cross
-            ctx.fillRect(hcX + 15 + 11, hcY + 15, 3, 25);
-            ctx.fillRect(hcX + 15, hcY + 15 + 11, 25, 3);
-
-            // Sign
-            ctx.fillStyle = healingCenter.signColor;
-            ctx.fillRect(hcX + hcWidth / 2 - 25, hcY - 50, 50, 20);
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillStyle = '#FF0000'; // Red cross on sign
-            ctx.textAlign = 'center';
-            ctx.fillText('H', hcX + hcWidth / 2, hcY - 37);
-            
-            ctx.font = '16px sans-serif';
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'center';
-            ctx.fillText('Press H to heal', hcX + hcWidth/2, hcY + hcHeight + 20);
-
-            // Draw Move Tutor Square (glowing)
-            const mtsX = moveTutorSquare.x;
-            const mtsY = moveTutorSquare.y;
-            const mtsSize = moveTutorSquare.size;
-            const glowRadius = mtsSize * 0.5 * (1 + Math.sin(Date.now() / 300) * 0.2); // Pulsating glow
-
-            // Outer glow
-            ctx.beginPath();
-            ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius + 5, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0, 191, 255, 0.3)'; // Lighter, more transparent glow
-            ctx.fill();
-
-            // Inner glow
-            ctx.beginPath();
-            ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius, 0, Math.PI * 2);
-            ctx.fillStyle = moveTutorSquare.glowColor;
-            ctx.fill();
-
-            // Base square
-            ctx.fillStyle = moveTutorSquare.baseColor;
-            ctx.fillRect(mtsX, mtsY, mtsSize, mtsSize);
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.strokeRect(mtsX, mtsY, mtsSize, mtsSize);
-
-            // Text for Move Tutor
-            ctx.font = '14px sans-serif';
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textAlign = 'center';
-            ctx.fillText('Teach', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 5);
-            ctx.fillText('(M)', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 20);
-
-            // Draw new area grass
+            // Draw Advanced Area Background (e.g., slightly different color)
+            ctx.fillStyle = '#E0E0E0'; // Example: Light gray background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw Healing Center 
+            const hcX = healingCenter.x, hcY = healingCenter.y, hcWidth = healingCenter.width, hcHeight = healingCenter.height;
+            ctx.fillStyle = healingCenter.wallColor; ctx.fillRect(hcX, hcY, hcWidth, hcHeight);
+            ctx.fillStyle = healingCenter.roofColor; ctx.beginPath(); ctx.moveTo(hcX - 10, hcY); ctx.lineTo(hcX + hcWidth + 10, hcY); ctx.lineTo(hcX + hcWidth / 2, hcY - 30); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = healingCenter.doorColor; ctx.fillRect(hcX + hcWidth / 2 - 15, hcY + hcHeight - 30, 30, 30);
+            ctx.fillStyle = healingCenter.windowColor; ctx.fillRect(hcX + 15, hcY + 15, 25, 25); ctx.fillStyle = '#000'; ctx.fillRect(hcX + 15 + 11, hcY + 15, 3, 25); ctx.fillRect(hcX + 15, hcY + 15 + 11, 25, 3);
+            ctx.fillStyle = healingCenter.signColor; ctx.fillRect(hcX + hcWidth / 2 - 25, hcY - 50, 50, 20); ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = '#FF0000'; ctx.textAlign = 'center'; ctx.fillText('H', hcX + hcWidth / 2, hcY - 37);
+            ctx.font = '16px sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.fillText('Press H to heal', hcX + hcWidth/2, hcY + hcHeight + 20);
+            // Draw Move Tutor Square 
+            const mtsX = moveTutorSquare.x, mtsY = moveTutorSquare.y, mtsSize = moveTutorSquare.size;
+            const glowRadius = mtsSize * 0.5 * (1 + Math.sin(Date.now() / 300) * 0.2);
+            ctx.beginPath(); ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius + 5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0, 191, 255, 0.3)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(mtsX + mtsSize / 2, mtsY + mtsSize / 2, glowRadius, 0, Math.PI * 2); ctx.fillStyle = moveTutorSquare.glowColor; ctx.fill();
+            ctx.fillStyle = moveTutorSquare.baseColor; ctx.fillRect(mtsX, mtsY, mtsSize, mtsSize); ctx.strokeStyle = '#FFFFFF'; ctx.strokeRect(mtsX, mtsY, mtsSize, mtsSize);
+            ctx.font = '14px sans-serif'; ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.fillText('Teach', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 5); ctx.fillText('(M)', mtsX + mtsSize / 2, mtsY + mtsSize / 2 + 20);
+             // Draw Advanced Area Grass Patches (Was missing here before, adding back)
             newAreaGrassPatches.forEach(patch => {
                 ctx.fillStyle = '#2d6a4f';
                 ctx.fillRect(patch.x, patch.y, patch.width, patch.height);
-                // Add some texture lines
                 for (let i = 0; i < patch.width; i += 8) {
                     ctx.strokeStyle = '#40916c';
                     ctx.beginPath();
@@ -2866,78 +2914,77 @@ function draw() {
                     ctx.stroke();
                 }
             });
+        } else if (currentArea === 'town') {
+            // Draw Town Background
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw NokeMart building
+            const mart = nokeMartBuilding;
+            ctx.fillStyle = mart.wallColor; ctx.fillRect(mart.x, mart.y, mart.width, mart.height);
+            ctx.fillStyle = mart.roofColor; ctx.beginPath(); ctx.moveTo(mart.x - 10, mart.y); ctx.lineTo(mart.x + mart.width + 10, mart.y); ctx.lineTo(mart.x + mart.width / 2, mart.y - 30); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = mart.doorColor; ctx.fillRect(mart.x + mart.width / 2 - 15, mart.y + mart.height - 30, 30, 30);
+            ctx.fillStyle = mart.signColor; ctx.fillRect(mart.x + mart.width / 2 - 25, mart.y - 50, 50, 20);
+            ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#000000'; ctx.textAlign = 'center'; ctx.fillText(mart.signText, mart.x + mart.width / 2, mart.y - 36);
+            ctx.font = '16px sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center';
+            ctx.fillText('Press S at Mart', mart.x + mart.width / 2, mart.y + mart.height + 20);
         } else {
-            // Draw starter area grass
+            // Default to Starter Area Background
+            ctx.fillStyle = '#90EE90'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw Starter Area Grass Patches (Was missing here before, adding back)
             tallGrassPatches.forEach(patch => {
-                ctx.fillStyle = '#38b000';
-                ctx.fillRect(patch.x, patch.y, patch.width, patch.height);
-                // Add some texture lines
-                for (let i = 0; i < patch.width; i += 8) {
-                    ctx.strokeStyle = '#70e000';
-                    ctx.beginPath();
-                    ctx.moveTo(patch.x + i, patch.y + patch.height);
-                    ctx.lineTo(patch.x + i, patch.y + patch.height - 12);
-                    ctx.stroke();
-                }
-            });
+                 ctx.fillStyle = '#38b000';
+                 ctx.fillRect(patch.x, patch.y, patch.width, patch.height);
+                 for (let i = 0; i < patch.width; i += 8) {
+                     ctx.strokeStyle = '#70e000';
+                     ctx.beginPath();
+                     ctx.moveTo(patch.x + i, patch.y + patch.height);
+                     ctx.lineTo(patch.x + i, patch.y + patch.height - 12);
+                     ctx.stroke();
+                 }
+             });
         }
 
-        // Draw player
+        // Draw Player (on top of area background/elements)
         drawPlayer();
 
-        // Draw area info
-        ctx.font = '16px sans-serif';
-        ctx.fillStyle = '#000';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Area: ${currentArea === 'starter' ? 'Starter' : 'Advanced'}`, 20, 40);
-        
-        // Draw team level
+        // Draw HUD/Info (on top)
+        ctx.font = '16px sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'left';
+        ctx.fillText(`Area: ${currentArea.charAt(0).toUpperCase() + currentArea.slice(1)}`, 20, 40);
         const teamLevel = calculateTeamLevel();
         ctx.fillText(`Team Level: ${teamLevel}/10`, 20, 60);
-        
-        // Draw Nokemon info
         if (startingNokemon) {
-            const isFainted = isNokemonFainted(startingNokemon);
-            ctx.fillStyle = isFainted ? '#666666' : '#000';
-            ctx.fillText(`${startingNokemon.name} Lv.${startingNokemon.level} - HP: ${startingNokemon.hp}/${startingNokemon.maxHp}${isFainted ? ' (FAINTED)' : ''}`, 20, 20);
+             const isFainted = isNokemonFainted(startingNokemon);
+             ctx.fillStyle = isFainted ? '#666666' : '#000';
+             ctx.fillText(`${startingNokemon.name} Lv.${startingNokemon.level} - HP: ${startingNokemon.hp}/${startingNokemon.maxHp}${isFainted ? ' (FAINTED)' : ''}`, 20, 20);
         }
 
-        // Draw battle screen if in battle
+        // Draw Battle Screen (if active, overlays previous draws)
         if (currentState === GAME_STATE.BATTLE || currentState === GAME_STATE.MOVE_SELECTION) {
             drawBattleScreen();
         }
-
-        // Draw Nokemon selection screen if in selection state
+        // Draw Nokemon Selection (if active, overlays previous draws)
         if (currentState === GAME_STATE.NOKEMON_SELECTION) {
             drawNokemonSelection();
         }
-
-        // Draw area transition message
-        if (battleMessage && battleMessageTimer > 0) {
-            ctx.font = '20px sans-serif';
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'center';
+        // Draw Battle/Game Message (if active)
+        if (battleMessage && battleMessageTimer > 0 && currentState !== GAME_STATE.NOKEMON_SHOP) { 
+            ctx.font = '20px sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center';
             ctx.fillText(battleMessage, canvas.width / 2, 70);
         }
-
-        // Add audio status indicator
+        // Audio Status
         if (!audioInitialized) {
-            ctx.font = '16px sans-serif';
-            ctx.fillStyle = '#FF0000';
-            ctx.textAlign = 'right';
+            ctx.font = '16px sans-serif'; ctx.fillStyle = '#FF0000'; ctx.textAlign = 'right';
             ctx.fillText('Click to enable sound', canvas.width - 20, canvas.height - 20);
         }
-    }
+    } // End of main drawing block (EXPLORING, BATTLE, etc.)
 
-    if (currentState === GAME_STATE.MOVE_LEARNING) {
-        drawMoveLearningScreen();
-    } else if (currentState === GAME_STATE.EVOLUTION) {
-        drawEvolutionScreen();
-    } else if (currentState === GAME_STATE.MOVE_TUTOR) {
-        drawMoveTutorScreen();
-    }
+    // Draw overlay states (on top of everything except transition)
+    if (currentState === GAME_STATE.MOVE_LEARNING) { drawMoveLearningScreen(); }
+    else if (currentState === GAME_STATE.EVOLUTION) { drawEvolutionScreen(); }
+    else if (currentState === GAME_STATE.MOVE_TUTOR && currentArea === 'advanced') { drawMoveTutorScreen(); }
 
-    // Draw transition overlay if transitioning
+    // Draw transition overlay (last thing)
     if (isTransitioning) {
         ctx.fillStyle = `rgba(0, 0, 0, ${transitionAlpha})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -3377,3 +3424,105 @@ const moveTutorSquare = {
     baseColor: 'rgba(0, 191, 255, 0.7)', // Deep sky blue with some transparency
     glowColor: 'rgba(0, 191, 255, 1)'
 };
+
+// Define the NokeMart building
+const nokeMartBuilding = {
+    x: 200,
+    y: 150,
+    width: 120,
+    height: 90,
+    wallColor: '#ADD8E6', // Light Blue walls
+    roofColor: '#FF4500', // Orange-Red roof
+    doorColor: '#8B4513', // Brown door
+    signText: 'MART',
+    signColor: '#FFFF00' // Yellow sign
+};
+
+// Define Nokemon available in the shop (example)
+const nokemonForSale = [
+    // Using copies of existing wild Nokemon templates for simplicity
+    // Adjust levels or stats as desired for shop versions
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Scamper'), level: 5, price: 0 }, // Price 0 for now
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Skywing'), level: 5, price: 0 },
+    { ...wildNokemonTemplates.uncommon.find(n => n.name === 'Sproutling'), level: 7, price: 0 }
+];
+
+// Add keydown handling for NOKEMON_SHOP state
+window.addEventListener('keydown', (e) => {
+    // ... (existing keydown logic for other states) ...
+    if (currentState === GAME_STATE.NOKEMON_SHOP) {
+        if (e.key === 'ArrowUp') {
+            selectedShopItemIndex = (selectedShopItemIndex - 1 + nokemonForSale.length) % nokemonForSale.length;
+            audioSystem.playSound('menu');
+        } else if (e.key === 'ArrowDown') {
+            selectedShopItemIndex = (selectedShopItemIndex + 1) % nokemonForSale.length;
+            audioSystem.playSound('menu');
+        } else if (e.key === 'Enter') {
+            const selectedNokemonToBuy = { ...nokemonForSale[selectedShopItemIndex] }; // Create a fresh copy
+            const partySize = (startingNokemon ? 1 : 0) + playerNokemon.length;
+            if (partySize < 6) { // Max 6 Nokemon in party
+                playerNokemon.push(selectedNokemonToBuy);
+                battleMessage = `${selectedNokemonToBuy.name} joined your team!`;
+                audioSystem.playSound('catch'); // Re-use catch sound
+            } else {
+                battleMessage = 'Your party is full!';
+                audioSystem.playSound('menu'); // Or some error sound
+            }
+            battleMessageTimer = 120;
+            currentState = GAME_STATE.EXPLORING; // Exit shop
+            currentArea = 'town'; // Stay in town
+        } else if (e.key === 'Escape') {
+            currentState = GAME_STATE.EXPLORING;
+            currentArea = 'town';
+            audioSystem.playSound('menu');
+        }
+    }
+});
+
+// Add drawNokemonShopScreen function
+function drawNokemonShopScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = '28px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nokemon Mart - For Sale', canvas.width / 2, 60);
+
+    const itemBoxYStart = 100;
+    const itemBoxHeight = 60;
+    const itemBoxSpacing = 10;
+
+    nokemonForSale.forEach((item, index) => {
+        const y = itemBoxYStart + index * (itemBoxHeight + itemBoxSpacing);
+        ctx.fillStyle = index === selectedShopItemIndex ? 'rgba(0, 200, 255, 0.3)' : 'rgba(0, 100, 150, 0.2)';
+        ctx.fillRect(canvas.width / 2 - 250, y, 500, itemBoxHeight);
+        ctx.strokeStyle = index === selectedShopItemIndex ? '#00CCFF' : '#0077AA';
+        ctx.strokeRect(canvas.width / 2 - 250, y, 500, itemBoxHeight);
+
+        // Draw Nokemon sprite (if available)
+        const spriteX = canvas.width / 2 - 220;
+        const spriteY = y + itemBoxHeight / 2;
+        if (item.sprite && item.sprite.drawFunction) {
+            item.sprite.drawFunction(ctx, spriteX, spriteY, 15); // Smaller radius for shop
+        } else if (item.sprite) {
+            ctx.fillStyle = item.sprite.color || '#CCCCCC';
+            ctx.beginPath();
+            ctx.arc(spriteX, spriteY, 15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${item.name} (Lv. ${item.level})`, canvas.width / 2 - 180, y + itemBoxHeight / 2 - 5);
+        ctx.fillStyle = MOVE_TYPES[item.type] ? MOVE_TYPES[item.type].color : '#FFFFFF';
+        ctx.fillText(`Type: ${item.type}`, canvas.width / 2 - 180, y + itemBoxHeight / 2 + 15);
+        // Price can be added here later: e.g., ctx.fillText(`Price: ${item.price} Coins`, canvas.width / 2 + 100, y + itemBoxHeight / 2 );
+    });
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText('Use ↑/↓ to select, Enter to acquire, Escape to leave.', canvas.width / 2, canvas.height - 40);
+}
