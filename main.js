@@ -1,3 +1,4 @@
+// Remove the import statement
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -685,7 +686,8 @@ const GAME_STATE = {
     EVOLUTION: 'evolution',  // New state
     MOVE_TUTOR: 'move_tutor', // New state for Move Tutor
     TOWN: 'town', // New area state
-    NOKEMON_SHOP: 'nokemon_shop' // New shop state
+    NOKEMON_SHOP: 'nokemon_shop', // New shop state
+    NOKEDEX: 'nokedex'  // Add Nokedex state
 };
 
 // Add transition animation variables
@@ -747,7 +749,7 @@ let currentTutorialStep = 0;
 const tutorialSteps = [
     {
         title: "Welcome to Nokemon!",
-        text: "Use Arrow Keys to move around",
+        text: "Use Arrow Keys to move around\nPress 'N' to open your Nokedex and view all discovered Nokemon.",
         highlight: "movement"
     },
     {
@@ -1244,51 +1246,44 @@ const audioSystem = {
         this.stopMusic();
         
         console.log('Playing music:', type);
-        const sequences = {
-            exploration: {
-                melody: ['C4', 'E4', 'G4', 'C5', 'G4', 'E4'],
-                durations: [0.2, 0.2, 0.2, 0.3, 0.2, 0.2],
-                harmony: ['G3', 'B3', 'D4', 'E4', 'D4', 'B3']
-            },
-            battle: {
-                melody: ['E4', 'G4', 'B4', 'C5', 'B4', 'G4'],
-                durations: [0.15, 0.15, 0.15, 0.2, 0.15, 0.15],
-                harmony: ['B3', 'D4', 'F4', 'G4', 'F4', 'D4']
-            },
-            healing: {
-                melody: ['C4', 'E4', 'G4', 'E4'],
+
+        let sequence;
+        if (type === 'exploration') {
+            sequence = explorationMusic;
+        } else if (type === 'battle') {
+            sequence = battleMusic;
+        } else if (type === 'healing') {
+            sequence = {
+                notes: ['C4', 'E4', 'G4', 'E4'],
                 durations: [0.3, 0.3, 0.3, 0.3],
-                harmony: ['G3', 'B3', 'D4', 'B3']
-            },
-            gameOver: {
-                melody: ['C5', 'B4', 'A4', 'G4'],
+                volume: 0.4
+            };
+        } else if (type === 'gameOver') {
+            sequence = {
+                notes: ['C5', 'B4', 'A4', 'G4'],
                 durations: [0.3, 0.3, 0.3, 0.4],
-                harmony: ['E4', 'D4', 'C4', 'B3']
-            }
-        };
-        
-        const sequence = sequences[type];
-        if (!sequence) return;
-        
+                volume: 0.4
+            };
+        } else {
+            return;
+        }
+
         this.currentMusic = type;
-        
+
         // Calculate total sequence duration
         const totalDuration = sequence.durations.reduce((sum, duration) => sum + duration, 0);
-        
+
         // Play the sequence continuously
         const playLoop = () => {
             let time = 0;
-            sequence.melody.forEach((note, index) => {
+            sequence.notes.forEach((note, index) => {
                 setTimeout(() => {
-                    // Play main melody
-                    this.playNote(note, sequence.durations[index], 0.3);
-                    // Play harmony
-                    this.playNote(sequence.harmony[index], sequence.durations[index], 0.2);
+                    this.playNote(note, sequence.durations[index], sequence.volume);
                 }, time * 1000);
                 time += sequence.durations[index];
             });
         };
-        
+
         // Start the loop
         playLoop();
         this.musicInterval = setInterval(playLoop, totalDuration * 1000);
@@ -1323,6 +1318,85 @@ const audioSystem = {
             this.context.close();
             this.init();
         }
+    },
+
+    // Utility function to generate a random music sequence
+    generateRandomMusicSequence({notesPool, minLen, maxLen, minDur, maxDur, volume}) {
+        const len = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+        const notes = [];
+        const durations = [];
+        for (let i = 0; i < len; i++) {
+            notes.push(notesPool[Math.floor(Math.random() * notesPool.length)]);
+            durations.push(Math.random() * (maxDur - minDur) + minDur);
+        }
+        return { notes, durations, volume };
+    },
+
+    getRandomBattleMusic() {
+        return this.generateRandomMusicSequence({
+            notesPool: ['C3','E3','G3','B3','C4','E4','G4','B4','C5','E5','G5','B5','C6','E6','G6','B6'],
+            minLen: 8, maxLen: 16, minDur: 0.08, maxDur: 0.22, volume: 0.5
+        });
+    },
+
+    getRandomExplorationMusic() {
+        return this.generateRandomMusicSequence({
+            notesPool: ['A2','C3','E3','A3','C4','E4','A4','C5','E5','A5','C6','E6','A6','C7','E7','A7'],
+            minLen: 10, maxLen: 20, minDur: 0.12, maxDur: 0.28, volume: 0.4
+        });
+    },
+
+    // Replace playMusic with the new random version
+    playMusic(type) {
+        this.stopMusic();
+        console.log('Playing music:', type);
+        let sequence;
+        if (type === 'exploration') {
+            sequence = this.getRandomExplorationMusic();
+        } else if (type === 'battle') {
+            sequence = this.getRandomBattleMusic();
+        } else if (type === 'healing') {
+            sequence = {
+                notes: ['C4', 'E4', 'G4', 'E4'],
+                durations: [0.3, 0.3, 0.3, 0.3],
+                volume: 0.4
+            };
+        } else if (type === 'gameOver') {
+            sequence = {
+                notes: ['C5', 'B4', 'A4', 'G4'],
+                durations: [0.3, 0.3, 0.3, 0.4],
+                volume: 0.4
+            };
+        } else {
+            return;
+        }
+        this.currentMusic = type;
+        const playLoop = () => {
+            let time = 0;
+            sequence.notes.forEach((note, index) => {
+                setTimeout(() => {
+                    this.playNote(note, sequence.durations[index], sequence.volume);
+                }, time * 1000);
+                time += sequence.durations[index];
+            });
+        };
+        const totalDuration = sequence.durations.reduce((sum, duration) => sum + duration, 0);
+        playLoop();
+        this.musicInterval = setInterval(() => {
+            // Regenerate a new random sequence for each loop
+            if (type === 'exploration') {
+                sequence = this.getRandomExplorationMusic();
+            } else if (type === 'battle') {
+                sequence = this.getRandomBattleMusic();
+            }
+            let time = 0;
+            sequence.notes.forEach((note, index) => {
+                setTimeout(() => {
+                    this.playNote(note, sequence.durations[index], sequence.volume);
+                }, time * 1000);
+                time += sequence.durations[index];
+            });
+        }, totalDuration * 1000);
     }
 };
 
@@ -1604,6 +1678,16 @@ window.addEventListener('keydown', (e) => {
             audioSystem.playSound('menu');
         }
     }
+
+    // Add Nokedex key handling
+    if (e.key === 'n' && currentState === GAME_STATE.EXPLORING) {
+        previousState = currentState;
+        currentState = GAME_STATE.NOKEDEX;
+        audioSystem.playSound('menu');
+    } else if (e.key === 'Escape' && currentState === GAME_STATE.NOKEDEX) {
+        currentState = previousState || GAME_STATE.EXPLORING;
+        audioSystem.playSound('menu');
+    }
 });
 
 window.addEventListener('keyup', (e) => {
@@ -1784,6 +1868,44 @@ function update() {
     if (battleMessageTimer > 0) {
         battleMessageTimer--;
     }
+
+    // Check if player is in area three and collides with the blocked path
+    if (currentArea === 'area3' && blockedPath.isBlocked) {
+        if (player.x < blockedPath.x + blockedPath.width &&
+            player.x + player.width > blockedPath.x &&
+            player.y < blockedPath.y + blockedPath.height &&
+            player.y + player.height > blockedPath.y) {
+            // Check if Thunderwing is in the party
+            const hasThunderwing = playerNokemon.some(n => n.name === 'Thunderwing');
+            if (hasThunderwing) {
+                blockedPath.isBlocked = false;
+                battleMessage = "Thunderwing broke the barrier!";
+                battleMessageTimer = 60;
+            } else {
+                battleMessage = "This path is blocked. Only Thunderwing can break it.";
+                battleMessageTimer = 60;
+            }
+        }
+    }
+
+    // Check if player is in the advanced zone and collides with the blocked path
+    if (currentArea === 'advanced' && blockedPath.isBlocked) {
+        if (player.x < blockedPath.x + blockedPath.width &&
+            player.x + player.width > blockedPath.x &&
+            player.y < blockedPath.y + blockedPath.height &&
+            player.y + player.height > blockedPath.y) {
+            // Check if Thunderwing is in the party
+            const hasThunderwing = playerNokemon.some(n => n.name === 'Thunderwing');
+            if (hasThunderwing) {
+                blockedPath.isBlocked = false;
+                battleMessage = "Thunderwing broke the barrier!";
+                battleMessageTimer = 60;
+            } else {
+                battleMessage = "This path is blocked. Only Thunderwing can break it.";
+                battleMessageTimer = 60;
+            }
+        }
+    }
 }
 
 function getRandomNokemon(rarity) {
@@ -1863,6 +1985,9 @@ function startBattle(wildNokemon) {
             console.log('Returning to position after battle:', { x: battleX, y: battleY });
         }
     }, 1000);
+
+    // Record Nokemon in Nokedex
+    Nokedex.markAsSeen(wildNokemon.name);
 }
 
 function endBattle() {
@@ -3072,6 +3197,8 @@ function draw() {
         drawPartyView();
     } else if (currentState === GAME_STATE.NOKEMON_SHOP) { // Shop state
         drawNokemonShopScreen();
+    } else if (currentState === GAME_STATE.NOKEDEX) {
+        drawNokedexScreen();
     } else {
          // Covers EXPLORING, BATTLE, MOVE_SELECTION, NOKEMON_SELECTION, MOVE_TUTOR, TOWN
         // Draw area-specific elements (original structure attempt)
@@ -3192,6 +3319,22 @@ function draw() {
         ctx.fillStyle = `rgba(0, 0, 0, ${transitionAlpha})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+
+    if (currentArea === 'area3' && blockedPath.isBlocked) {
+        ctx.fillStyle = 'rgba(150, 0, 0, 0.8)'; // Red color for visibility
+        ctx.fillRect(blockedPath.x, blockedPath.y, blockedPath.width, blockedPath.height);
+        ctx.strokeStyle = '#FFFFFF'; // White border
+        ctx.lineWidth = 2;
+        ctx.strokeRect(blockedPath.x, blockedPath.y, blockedPath.width, blockedPath.height);
+    }
+
+    if (currentArea === 'advanced' && blockedPath.isBlocked) {
+        ctx.fillStyle = 'rgba(150, 0, 0, 0.8)'; // Red color for visibility
+        ctx.fillRect(blockedPath.x, blockedPath.y, blockedPath.width, blockedPath.height);
+        ctx.strokeStyle = '#FFFFFF'; // White border
+        ctx.lineWidth = 2;
+        ctx.strokeRect(blockedPath.x, blockedPath.y, blockedPath.width, blockedPath.height);
+    }
 }
 
 function gameLoop() {
@@ -3207,49 +3350,29 @@ gameLoop();
 function tryCatch() {
     if (!isPlayerTurn || !currentWildNokemon) return;
     
-    // Calculate catch rate based on remaining HP percentage
-    const hpPercentage = currentWildNokemon.hp / currentWildNokemon.maxHp;
-    const catchRate = (1 - hpPercentage) * 0.8; // 80% chance at 1 HP, 0% at full HP
+    const catchChance = 0.3; // 30% base catch rate
+    const catchSuccessful = Math.random() < catchChance;
     
-    if (Math.random() < catchRate) {
-        // Successfully caught
-        const caughtNokemon = { ...currentWildNokemon };
-        caughtNokemon.hp = caughtNokemon.maxHp; // Heal the caught Nokemon
-        playerNokemon.push(caughtNokemon);
-        
-        // Play catch sound
-        audioSystem.playSound('catch');
-        
-        battleMessage = `Gotcha! ${caughtNokemon.name} was caught!`;
-        battleMessageTimer = 60;
-        
-        // Give experience to the battling Nokemon
-        setTimeout(() => {
-            // Level up the battling Nokemon
-            levelUp(battleNokemon);
-            
-            // Update the original Nokemon's stats
-            const allNokemon = [startingNokemon, ...playerNokemon];
-            const originalNokemon = allNokemon[selectedNokemonIndex];
-            if (originalNokemon) {
-                originalNokemon.level = battleNokemon.level;
-                originalNokemon.maxHp = battleNokemon.maxHp;
-                originalNokemon.hp = battleNokemon.hp;
-                originalNokemon.attack = battleNokemon.attack;
-                originalNokemon.defense = battleNokemon.defense;
-            }
-            
-            setTimeout(() => {
-                endBattle();
-            }, 2000);
-        }, 1000);
+    if (catchSuccessful) {
+        const partySize = (startingNokemon ? 1 : 0) + playerNokemon.length;
+        if (partySize < 6) {
+            playerNokemon.push({ ...currentWildNokemon });
+            battleMessage = `Caught ${currentWildNokemon.name}!`;
+            audioSystem.playSound('catch');
+            // Record caught Nokemon in Nokedex
+            Nokedex.markAsCaught(currentWildNokemon.name);
+            Nokedex.addEntry(currentWildNokemon);
+            endBattle();
+        } else {
+            battleMessage = "Your party is full!";
+            battleMessageTimer = 60;
+            isPlayerTurn = false;
+            setTimeout(wildNokemonTurn, 1000);
+        }
     } else {
-        // Failed to catch
-        battleMessage = "Oh no! The Nokemon broke free!";
+        battleMessage = "The Nokemon broke free!";
         battleMessageTimer = 60;
         isPlayerTurn = false;
-        
-        // Wild Nokemon's turn after failed catch
         setTimeout(wildNokemonTurn, 1000);
     }
 }
@@ -3645,15 +3768,15 @@ const nokeMartBuilding = {
 const nokemonForSale = [
     // Using copies of existing wild Nokemon templates for simplicity
     // Adjust levels or stats as desired for shop versions
-    { ...wildNokemonTemplates.common.find(n => n.name === 'Scamper'), level: 5, price: 250 }, 
-    { ...wildNokemonTemplates.common.find(n => n.name === 'Skywing'), level: 5, price: 300 },
-    { ...wildNokemonTemplates.uncommon.find(n => n.name === 'Sproutling'), level: 7, price: 750 },
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Scamper'), level: 5, price: 150 }, 
+    { ...wildNokemonTemplates.common.find(n => n.name === 'Skywing'), level: 5, price: 200 },
+    { ...wildNokemonTemplates.uncommon.find(n => n.name === 'Sproutling'), level: 7, price: 400 },
     // Rare, Legendary, and Mythical Nokemon for the shop
-    { ...wildNokemonTemplates.rare.find(n => n.name === 'Flametail'), level: 10, price: 2000 }, // Existing Rare
-    { ...legendaryNokemon, level: 18, price: 10000 }, // Existing Legendary (Thunderwing)
-    { ...marketExclusiveNokemon.Geodrake, price: 15000 }, // New Legendary
-    { ...marketExclusiveNokemon.Mysticor, price: 25000 }, // New Mythical
-    { ...marketExclusiveNokemon.Shadower, price: 25000 }  // New Mythical
+    { ...wildNokemonTemplates.rare.find(n => n.name === 'Flametail'), level: 10, price: 1000 }, // Existing Rare
+    { ...legendaryNokemon, level: 18, price: 5000 }, // Existing Legendary (Thunderwing)
+    { ...marketExclusiveNokemon.Geodrake, price: 7500 }, // New Legendary
+    { ...marketExclusiveNokemon.Mysticor, price: 12500 }, // New Mythical
+    { ...marketExclusiveNokemon.Shadower, price: 12500 }  // New Mythical
 ];
 
 // Add keydown handling for NOKEMON_SHOP state
@@ -3715,3 +3838,123 @@ function drawNokemonShopScreen() {
     ctx.textAlign = 'center';
     ctx.fillText('Use ↑/↓ to select, Enter to acquire, Escape to leave.', canvas.width / 2, canvas.height - 40);
 }
+
+// Update the draw function to include Nokedex
+function drawNokedexScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = '28px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nokedex', canvas.width / 2, 60);
+
+    // Display Nokemon seen and caught
+    ctx.font = '20px sans-serif';
+    ctx.fillStyle = '#FFD700'; // Gold color for seen Nokemon
+    ctx.textAlign = 'left';
+    ctx.fillText(`Seen Nokemon: ${Nokedex.getSeenNokemon().length}`, 20, 100);
+
+    ctx.fillStyle = '#00CCFF'; // Blue color for caught Nokemon
+    ctx.textAlign = 'left';
+    ctx.fillText(`Caught Nokemon: ${Nokedex.getCaughtNokemon().length}`, 20, 150);
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText('Use Enter to return to game', canvas.width / 2, canvas.height - 40);
+}
+
+// After GAME_STATE declaration and starterNokemon/wildNokemonTemplates/legendaryNokemon/marketExclusiveNokemon definitions
+if (window.Nokedex) {
+    starterNokemon.forEach(n => Nokedex.addEntry(n));
+    Object.values(wildNokemonTemplates).flat().forEach(n => Nokedex.addEntry(n));
+    Nokedex.addEntry(legendaryNokemon);
+    Object.values(marketExclusiveNokemon).forEach(n => Nokedex.addEntry(n));
+}
+
+// Update the first tutorial step to mention the Nokedex
+if (tutorialSteps && tutorialSteps.length > 0) {
+    tutorialSteps[0].text = "Use Arrow Keys to move around\nPress 'N' to open your Nokedex and view all discovered Nokemon.";
+}
+
+// In the keydown event, ensure Escape returns to previous state from Nokedex
+window.addEventListener('keydown', (e) => {
+    // ... existing code ...
+    if (e.key === 'n' && currentState === GAME_STATE.EXPLORING) {
+        previousState = currentState;
+        currentState = GAME_STATE.NOKEDEX;
+        audioSystem.playSound('menu');
+    } else if (e.key === 'Escape' && currentState === GAME_STATE.NOKEDEX) {
+        currentState = previousState || GAME_STATE.EXPLORING;
+        audioSystem.playSound('menu');
+    }
+    // ... rest of the code ...
+});
+
+// Adjust the blocked path's position to the advanced zone, bottom left corner
+const blockedPath = {
+    x: 50, // Close to the left edge
+    y: canvas.height - 150, // Close to the bottom edge
+    width: 100,
+    height: 100,
+    isBlocked: true
+};
+
+// Update the battle music sequence to a completely different tune
+const battleMusic = {
+    notes: ['F4', 'A4', 'C5', 'F5', 'A5', 'C6', 'F6', 'A6', 'C7', 'F7', 'A7', 'C8'],
+    durations: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+    volume: 0.5
+};
+
+// Update the exploration music sequence to a new tune
+const explorationMusic = {
+    notes: ['E4', 'G4', 'B4', 'E5', 'G5', 'B5', 'E6', 'G6', 'B6', 'E7', 'G7', 'B7'],
+    durations: [0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.15],
+    volume: 0.4
+};
+
+// Utility function to generate a random music sequence
+function generateRandomMusicSequence({notesPool, minLen, maxLen, minDur, maxDur, volume}) {
+    const len = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+    const notes = [];
+    const durations = [];
+    for (let i = 0; i < len; i++) {
+        notes.push(notesPool[Math.floor(Math.random() * notesPool.length)]);
+        durations.push(Math.random() * (maxDur - minDur) + minDur);
+    }
+    return { notes, durations, volume };
+}
+
+// Replace the music objects with functions that generate random sequences
+function getRandomBattleMusic() {
+    return generateRandomMusicSequence({
+        notesPool: ['C3','E3','G3','B3','C4','E4','G4','B4','C5','E5','G5','B5','C6','E6','G6','B6'],
+        minLen: 8, maxLen: 16, minDur: 0.08, maxDur: 0.22, volume: 0.5
+    });
+}
+
+function getRandomExplorationMusic() {
+    return generateRandomMusicSequence({
+        notesPool: ['A2','C3','E3','A3','C4','E4','A4','C5','E5','A5','C6','E6','A6','C7','E7','A7'],
+        minLen: 10, maxLen: 20, minDur: 0.12, maxDur: 0.28, volume: 0.4
+    });
+}
+
+
+
+    
+    
+    
+    
+
+        
+            
+            
+
+        
+    
+        
+            
+
